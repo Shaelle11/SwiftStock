@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function SalesPage() {
   const { user } = useAuth();
   const [sales, setSales] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalSales: 0,
     todaySales: 0,
@@ -15,10 +15,7 @@ export default function SalesPage() {
     averageOrder: 0
   });
 
-  useEffect(() => {
-    // TODO: Fetch sales data
-    setLoading(false);
-  }, []);
+  // TODO: Add useEffect here when implementing data fetching
 
   return (
     <div className="p-6">
@@ -65,7 +62,7 @@ export default function SalesPage() {
               </svg>
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Today's Sales</p>
+              <p className="text-sm font-medium text-gray-600">Today&apos;s Sales</p>
               <p className="text-2xl font-bold text-gray-900">{stats.todaySales}</p>
             </div>
           </div>

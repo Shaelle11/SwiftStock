@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import ProductPicker from "@/components/pos/ProductPicker";
-import CartSummary from "@/components/pos/CartSummary";
-import { useAuth } from '@/lib/auth/AuthContext';
+import ProductPicker from "@/components/features/pos/ProductPicker";
+import CartSummary from "@/components/features/pos/CartSummary";
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/utils/api';
 import { calculateSubtotal, calculateVAT } from '@/lib/sales';
 import type { Product } from '@/lib/types';

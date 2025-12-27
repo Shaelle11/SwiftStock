@@ -12,7 +12,7 @@ const productSchema = z.object({
   stockQuantity: z.number().int().min(0, 'Stock quantity must be a non-negative integer'),
   lowStockThreshold: z.number().int().min(0, 'Low stock threshold must be a non-negative integer'),
   barcode: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().url('Image URL must be valid').optional().or(z.literal('').transform(() => undefined)),
 });
 
 // GET - Fetch all products for a store
@@ -139,10 +139,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
+    console.log('Received product data:', body);
+    
     // Validate input
     const validationResult = productSchema.safeParse(body);
     
     if (!validationResult.success) {
+      console.log('Validation failed:', validationResult.error.issues);
       return NextResponse.json(
         {
           success: false,
