@@ -1,0 +1,241 @@
+// SwiftStock Database Schema
+// Inventory & Sales Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      String   @default("CASHIER")
+  isActive  Boolean  @default(true)
+  storeId   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  ownedStore     Store?  @relation("StoreOwner")
+  salesMade      Sale[]  @relation("SalesCashier")
+  orders         Order[] @relation("CustomerOrders")
+  carts          Cart[]  @relation("CustomerCarts")
+  
+  @@map("users")
+}
+
+model Store {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  phone       String
+  email       String
+  slug        String  @unique
+  isActive    Boolean @default(true)
+  ownerId     String  @unique
+  
+  // Branding
+  logoUrl       String?
+  primaryColor  String @default("#000000")
+  secondaryColor String @default("#ffffff")
+  accentColor   String @default("#3b82f6")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  owner    User      @relation("StoreOwner", fields: [ownerId], references: [id])
+  products Product[]
+  sales    Sale[]
+  orders   Order[]
+  carts    Cart[]
+  tools    Tool[]    @relation("StoreTools")
+  
+  @@map("stores")
+}
+
+model Product {
+  id                String  @id @default(cuid())
+  name              String
+  description       String?
+  category          String
+  costPrice         Float
+  sellingPrice      Float
+  stockQuantity     Int
+  lowStockThreshold Int     @default(10)
+  barcode           String?
+  imageUrl          String?
+  isActive          Boolean @default(true)
+  storeId           String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  saleItems SaleItem[]
+  cartItems CartItem[]
+  orderItems OrderItem[]
+  
+  @@map("products")
+}
+
+model Sale {
+  id            String        @id @default(cuid())
+  storeId       String
+  cashierId     String
+  customerId    String?
+  subtotal      Float
+  tax           Float
+  discount      Float         @default(0)
+  total         Float
+  paymentMethod String
+  notes         String?
+  
+  createdAt DateTime @default(now())
+  
+  // Relations
+  store   Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  cashier User       @relation("SalesCashier", fields: [cashierId], references: [id])
+  items   SaleItem[]
+  
+  @@map("sales")
+}
+
+model SaleItem {
+  id          String @id @default(cuid())
+  saleId      String
+  productId   String
+  productName String // Store name at time of sale
+  unitPrice   Float  // Price at time of sale
+  quantity    Int
+  subtotal    Float
+  
+  // Relations
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  
+  @@map("sale_items")
+}
+
+model Cart {
+  id         String    @id @default(cuid())
+  customerId String?
+  storeId    String
+  expiresAt  DateTime? // For guest carts
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  customer User?      @relation("CustomerCarts", fields: [customerId], references: [id])
+  store    Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items    CartItem[]
+  
+  @@map("carts")
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int
+  
+  // Relations
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  orderNumber   String        @unique
+  storeId       String
+  customerId    String?
+  
+  // Customer information
+  customerFirstName String
+  customerLastName  String
+  customerEmail     String
+  customerPhone     String
+  customerAddress   String?
+  
+  subtotal      Float
+  tax           Float
+  shipping      Float         @default(0)
+  discount      Float         @default(0)
+  total         Float
+  status        String        @default("PENDING")
+  paymentStatus String        @default("PENDING")
+  paymentMethod String?
+  notes         String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  store    Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer User?       @relation("CustomerOrders", fields: [customerId], references: [id])
+  items    OrderItem[]
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String // Store name at time of order
+  unitPrice   Float  // Price at time of order
+  quantity    Int
+  subtotal    Float
+  
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+  
+  @@map("order_items")
+}
+
+model Tool {
+  id                String    @id @default(cuid())
+  name              String
+  type              String
+  serialNumber      String
+  itemNumber        String
+  status            String     @default("ACTIVE")
+  unitOfMeasurement String
+  amount            Float
+  price             Float
+  datePurchased     DateTime
+  currency          String
+  store             String    // Store name/location
+  project           String
+  department        String
+  category          String
+  manufacturer      String
+  description       String
+  imageUrl          String?
+  warrantyUrl       String?
+  piDocumentUrl     String?
+  storeId           String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  storeRelation Store @relation("StoreTools", fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@map("tools")
+}
