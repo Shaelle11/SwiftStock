@@ -11,8 +11,8 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  // Prevent execution during build time
-  if (process.env.NODE_ENV === 'development' && process.env.SKIP_ENV_VALIDATION === 'true') {
+  // Only prevent execution during build time, not in production
+  if (process.env.SKIP_ENV_VALIDATION === 'true' && process.env.NODE_ENV !== 'production') {
     return NextResponse.json(
       {
         success: false,
@@ -24,6 +24,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    
+    // Add debug logging for production
+    console.log('Register attempt for:', body.email);
+    console.log('Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      hasJWTSecret: !!process.env.JWT_SECRET,
+      hasDatabaseURL: !!process.env.DATABASE_URL
+    });
     
     // Validate input
     const validationResult = registerSchema.safeParse(body);

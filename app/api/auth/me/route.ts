@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
-  // Prevent execution during build time
-  if (process.env.NODE_ENV === 'development' && process.env.SKIP_ENV_VALIDATION === 'true') {
+  // Only prevent execution during build time, not in production
+  if (process.env.SKIP_ENV_VALIDATION === 'true' && process.env.NODE_ENV !== 'production') {
     return NextResponse.json(
       {
         success: false,

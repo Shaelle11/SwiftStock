@@ -89,11 +89,27 @@ export function verifyToken(token: string): AuthUser | null {
  */
 export async function registerUser(data: RegisterData): Promise<AuthResponse> {
   try {
-    // Skip database operations during build time
-    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+    console.log('Attempting registration for:', data.email);
+    console.log('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      hasJWTSecret: !!process.env.JWT_SECRET,
+      hasDatabaseURL: !!process.env.DATABASE_URL
+    });
+
+    // Check if required environment variables are present
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET not found');
       return {
         success: false,
-        message: 'Database not available during build'
+        message: 'Server configuration error'
+      };
+    }
+
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL not found');
+      return {
+        success: false,
+        message: 'Database connection error'
       };
     }
 
@@ -154,11 +170,27 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
  */
 export async function loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
-    // Skip database operations during build time
-    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+    console.log('Attempting login for:', credentials.email);
+    console.log('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      hasJWTSecret: !!process.env.JWT_SECRET,
+      hasDatabaseURL: !!process.env.DATABASE_URL
+    });
+
+    // Check if required environment variables are present
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET not found');
       return {
         success: false,
-        message: 'Database not available during build'
+        message: 'Server configuration error'
+      };
+    }
+
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL not found');
+      return {
+        success: false,
+        message: 'Database connection error'
       };
     }
 
@@ -166,6 +198,8 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
     const user = await prisma.user.findUnique({
       where: { email: credentials.email }
     });
+
+    console.log('User found:', !!user);
 
     if (!user || !user.isActive) {
       return {
@@ -176,6 +210,8 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
 
     // Verify password
     const isValidPassword = await verifyPassword(credentials.password, user.password);
+
+    console.log('Password valid:', isValidPassword);
 
     if (!isValidPassword) {
       return {
@@ -202,10 +238,10 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
       message: 'Login successful'
     };
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
     return {
       success: false,
-      message: 'Login failed'
+      message: `Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
 }
