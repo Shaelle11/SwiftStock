@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     
     // Add debug logging for production
     console.log('Register attempt for:', body.email);
+    console.log('Full request body:', JSON.stringify(body, null, 2));
     console.log('Environment check:', {
       NODE_ENV: process.env.NODE_ENV,
       hasJWTSecret: !!process.env.JWT_SECRET,
@@ -37,11 +38,13 @@ export async function POST(request: NextRequest) {
     const validationResult = registerSchema.safeParse(body);
     
     if (!validationResult.success) {
+      console.error('Validation failed:', validationResult.error.issues);
       return NextResponse.json(
         {
           success: false,
           message: 'Validation failed',
-          errors: validationResult.error.issues
+          errors: validationResult.error.issues,
+          receivedData: body
         },
         { status: 400 }
       );
@@ -78,11 +81,25 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration API error:', error);
+    console.error('Registration API error details:', error);
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid JSON in request body',
+          error: 'JSON_PARSE_ERROR'
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );

@@ -69,11 +69,25 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Login API error:', error);
+    console.error('Login API error details:', error);
+    
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid JSON in request body',
+          error: 'JSON_PARSE_ERROR'
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
     );
