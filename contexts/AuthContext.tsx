@@ -38,7 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyToken = useCallback(async (authToken: string) => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const baseUrl = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+        
+      const response = await fetch(`${baseUrl}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
@@ -82,17 +86,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, [verifyToken]);
 
-
+  // Helper function to get the base URL
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    return process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  };
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const baseUrl = getBaseUrl();
+      console.log('Attempting login with URL:', `${baseUrl}/api/auth/login`);
+      
+      const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       });
+
+      console.log('Login response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Login response error:', errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          return { success: false, message: errorData.message || 'Login failed' };
+        } catch {
+          return { success: false, message: `Login failed with status ${response.status}` };
+        }
+      }
 
       const data = await response.json();
 
@@ -113,13 +139,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (data: RegisterData): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await fetch('/api/auth/register', {
+      const baseUrl = getBaseUrl();
+      console.log('Attempting register with URL:', `${baseUrl}/api/auth/register`);
+      console.log('Registration data:', JSON.stringify(data, null, 2));
+      
+      const response = await fetch(`${baseUrl}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       });
+
+      console.log('Register response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Register response error:', errorText);
+        try {
+          const errorData = JSON.parse(errorText);
+          return { success: false, message: errorData.message || 'Registration failed' };
+        } catch {
+          return { success: false, message: `Registration failed with status ${response.status}` };
+        }
+      }
 
       const result = await response.json();
 
