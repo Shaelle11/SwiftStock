@@ -11,6 +11,17 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Prevent execution during build time
+  if (process.env.NODE_ENV === 'development' && process.env.SKIP_ENV_VALIDATION === 'true') {
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'API not available during build'
+      },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     
