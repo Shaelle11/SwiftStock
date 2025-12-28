@@ -61,11 +61,15 @@ export async function POST(request: NextRequest) {
       role
     });
 
+    console.log('Registration result:', JSON.stringify(result, null, 2));
+
     if (!result.success) {
+      console.error('Registration failed with message:', result.message);
       return NextResponse.json(
         {
           success: false,
-          message: result.message
+          message: result.message,
+          details: 'Registration function returned failure'
         },
         { status: 400 }
       );

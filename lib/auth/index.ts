@@ -157,10 +157,35 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
       message: 'User registered successfully'
     };
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error details:', error);
+    
+    // Handle specific Prisma errors
+    if (error && typeof error === 'object' && 'code' in error) {
+      const prismaError = error as { code: string; message: string };
+      
+      switch (prismaError.code) {
+        case 'P2002':
+          return {
+            success: false,
+            message: 'Email already exists'
+          };
+        case 'P2003':
+          return {
+            success: false,
+            message: 'Database constraint violation'
+          };
+        default:
+          console.error('Prisma error code:', prismaError.code);
+          return {
+            success: false,
+            message: `Database error: ${prismaError.message}`
+          };
+      }
+    }
+    
     return {
       success: false,
-      message: 'Registration failed'
+      message: `Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
 }
