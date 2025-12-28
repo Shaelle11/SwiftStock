@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/db/prisma';
 import type { UserRole } from '@/lib/types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-here';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-here-default-for-build';
 
 export interface AuthUser {
   id: string;
@@ -89,6 +89,14 @@ export function verifyToken(token: string): AuthUser | null {
  */
 export async function registerUser(data: RegisterData): Promise<AuthResponse> {
   try {
+    // Skip database operations during build time
+    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+      return {
+        success: false,
+        message: 'Database not available during build'
+      };
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email }
@@ -146,6 +154,14 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
  */
 export async function loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
+    // Skip database operations during build time
+    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+      return {
+        success: false,
+        message: 'Database not available during build'
+      };
+    }
+
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: credentials.email }

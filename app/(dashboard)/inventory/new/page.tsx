@@ -64,7 +64,7 @@ export default function NewProductPage() {
         router.push('/inventory');
       } else {
         console.error('API Error:', response.message, response.error);
-        alert('Failed to create product: ' + (response.message || 'Unknown error'));
+        alert('Failed to create product: ' + (response.message || response.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error creating product:', error);

@@ -56,6 +56,14 @@ async function seed() {
       data: { storeId: store.id },
     });
 
+    // Update cashier user with store association
+    await prisma.user.update({
+      where: { id: cashier.id },
+      data: { storeId: store.id },
+    });
+
+    console.log('👤 Users associated with store');
+
     // Create sample products
     const sampleProducts = [
       {
