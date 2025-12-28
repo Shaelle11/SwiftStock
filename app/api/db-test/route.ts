@@ -6,14 +6,39 @@ export async function GET() {
     console.log('Testing database connection...');
     
     // Test basic connection
-    console.log('Attempting to count users...');
-    const userCount = await prisma.user.count();
-    console.log('User count:', userCount);
+    console.log('Attempting to count users and stores...');
+    const [userCount, storeCount, users, stores] = await Promise.all([
+      prisma.user.count(),
+      prisma.store.count(),
+      prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          storeId: true,
+        }
+      }),
+      prisma.store.findMany({
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          ownerId: true,
+        }
+      })
+    ]);
+    
+    console.log('User count:', userCount, 'Store count:', storeCount);
     
     return NextResponse.json({
       success: true,
       message: 'Database connection successful',
       userCount,
+      storeCount,
+      users,
+      stores,
       timestamp: new Date().toISOString(),
       environment: {
         NODE_ENV: process.env.NODE_ENV,
