@@ -114,11 +114,13 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
     }
 
     // Check if user already exists
+    console.log('Checking if user exists...');
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email }
     });
 
     if (existingUser) {
+      console.log('User already exists:', data.email);
       return {
         success: false,
         message: 'User with this email already exists'
@@ -126,9 +128,11 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
     }
 
     // Hash password
+    console.log('Hashing password...');
     const hashedPassword = await hashPassword(data.password);
 
     // Create user
+    console.log('Creating user in database...');
     const user = await prisma.user.create({
       data: {
         email: data.email,
@@ -138,6 +142,8 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
         role: (data.role?.toUpperCase() || 'CASHIER') as 'ADMIN' | 'CASHIER' | 'CUSTOMER'
       }
     });
+
+    console.log('User created successfully:', user.id);
 
     const authUser: AuthUser = {
       id: user.id,
