@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db/prisma';
 
 export async function GET() {
   try {
     console.log('Testing database connection...');
     
-    // Import prisma
-    const { prisma } = await import('@/lib/db/prisma');
-    
     // Test basic connection
     console.log('Attempting to count users...');
     const userCount = await prisma.user.count();
     console.log('User count:', userCount);
-    
-    // Test if we can create a user (but don't actually save)
-    console.log('Testing user creation (dry run)...');
     
     return NextResponse.json({
       success: true,
@@ -45,20 +40,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Test registration data:', JSON.stringify(body, null, 2));
     
-    // Import functions
-    const { registerUser } = await import('@/lib/auth');
+    // Basic validation
+    const { email, password, firstName, lastName } = body;
     
-    // Try the actual registration
-    console.log('Calling registerUser function...');
-    const result = await registerUser(body);
+    if (!email || !password || !firstName || !lastName) {
+      return NextResponse.json({
+        success: false,
+        message: 'Missing required fields'
+      }, { status: 400 });
+    }
     
-    console.log('Registration result:', JSON.stringify(result, null, 2));
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+    
+    if (existingUser) {
+      return NextResponse.json({
+        success: false,
+        message: 'User already exists'
+      }, { status: 409 });
+    }
     
     return NextResponse.json({
       success: true,
-      message: 'Test completed',
-      result,
-      originalData: body
+      message: 'Test completed - user would be created',
+      email: body.email,
+      firstName: body.firstName,
+      lastName: body.lastName
     });
     
   } catch (error) {
