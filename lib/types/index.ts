@@ -1,7 +1,7 @@
 // Core type definitions for SwiftStock
 export type UserRole = 'admin' | 'cashier' | 'customer';
 
-export type OrderStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'completed';
 
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 
@@ -15,8 +15,11 @@ export interface User {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  // Store information for admin/cashier users
+  // Store information for admin/cashier users (null for customers)
   storeId?: string;
+  // Customer-specific fields
+  phone?: string;
+  address?: string;
 }
 
 export interface Store {

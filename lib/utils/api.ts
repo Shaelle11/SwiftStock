@@ -7,20 +7,23 @@ interface RequestConfig {
 }
 
 /**
- * Make authenticated API request
+ * Make API request (with optional authentication)
  */
 export async function apiRequest<T>(
   endpoint: string,
-  config: RequestConfig = {}
+  config: RequestConfig = {},
+  requireAuth: boolean = true
 ): Promise<ApiResponse<T>> {
   try {
     const { method = 'GET', data, params } = config;
     
-    // Get token from localStorage
-    const token = localStorage.getItem('swiftstock_token');
-    
-    if (!token) {
-      throw new Error('No authentication token found');
+    // Get token from localStorage if authentication is required
+    let token: string | null = null;
+    if (requireAuth) {
+      token = localStorage.getItem('swiftstock_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
     }
 
     // Build URL with query params
@@ -32,9 +35,13 @@ export async function apiRequest<T>(
     }
 
     const headers: HeadersInit = {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
+
+    // Add authorization header only if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const requestConfig: RequestInit = {
       method,
@@ -87,6 +94,26 @@ export const api = {
 
   delete: <T>(endpoint: string) =>
     apiRequest<T>(endpoint, { method: 'DELETE' }),
+};
+
+/**
+ * Public API methods (no authentication required)
+ */
+export const publicApi = {
+  get: <T>(endpoint: string, params?: Record<string, string>) =>
+    apiRequest<T>(endpoint, { method: 'GET', params }, false),
+
+  post: <T>(endpoint: string, data?: Record<string, unknown> | unknown[]) =>
+    apiRequest<T>(endpoint, { method: 'POST', data }, false),
+
+  put: <T>(endpoint: string, data?: Record<string, unknown> | unknown[]) =>
+    apiRequest<T>(endpoint, { method: 'PUT', data }, false),
+
+  patch: <T>(endpoint: string, data?: Record<string, unknown> | unknown[]) =>
+    apiRequest<T>(endpoint, { method: 'PATCH', data }, false),
+
+  delete: <T>(endpoint: string) =>
+    apiRequest<T>(endpoint, { method: 'DELETE' }, false),
 };
 
 /**

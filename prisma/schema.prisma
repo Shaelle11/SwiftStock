@@ -16,9 +16,14 @@ model User {
   password  String
   firstName String
   lastName  String
-  role      String   @default("CASHIER")
+  role      String   @default("CUSTOMER") // Changed from CASHIER to CUSTOMER as default
   isActive  Boolean  @default(true)
-  storeId   String?
+  storeId   String?  // For business users (admin/cashier), null for customers
+  
+  // Customer-specific fields
+  phone       String?
+  address     String?
+  dateOfBirth DateTime?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
