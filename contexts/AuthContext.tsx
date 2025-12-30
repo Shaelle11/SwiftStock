@@ -3,15 +3,27 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { AuthUser } from '@/lib/auth';
 
+interface StoreData {
+  id: string;
+  name: string;
+  description?: string;
+  address: string;
+  phone: string;
+  email: string;
+  logoUrl?: string;
+  primaryColor: string;
+}
+
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
+  store: StoreData | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
-  hasRole: (roles: string[]) => boolean;
+  hasUserType: (types: string[]) => boolean;
 }
 
 interface RegisterData {
@@ -19,7 +31,8 @@ interface RegisterData {
   password: string;
   firstName: string;
   lastName: string;
-  role?: string;
+  businessName?: string;
+  businessType?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,13 +40,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [store, setStore] = useState<StoreData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
+    setStore(null);
     localStorage.removeItem('swiftstock_token');
     localStorage.removeItem('swiftstock_user');
+  }, []);
+
+  const fetchStoreData = useCallback(async (authToken: string) => {
+    try {
+      const baseUrl = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+        
+      const response = await fetch(`${baseUrl}/api/stores?owner=true`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const storeData = await response.json();
+        setStore(storeData);
+      } else {
+        // User might not have a store yet
+        setStore(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch store data:', error);
+      setStore(null);
+    }
   }, []);
 
   const verifyToken = useCallback(async (authToken: string) => {
@@ -58,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
       if (data.success) {
         setUser(data.user);
+        // Fetch store data after successful verification
+        await fetchStoreData(authToken);
       } else {
         logout();
       }
@@ -65,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Token verification failed');
       logout();
     }
-  }, [logout]);
+  }, [logout, fetchStoreData]);
 
   useEffect(() => {
     const initializeAuth = () => {
@@ -127,6 +170,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(data.token);
         localStorage.setItem('swiftstock_token', data.token);
         localStorage.setItem('swiftstock_user', JSON.stringify(data.user));
+        // Fetch store data after successful login
+        await fetchStoreData(data.token);
         return { success: true };
       } else {
         return { success: false, message: data.message };
@@ -183,20 +228,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
 
-  const hasRole = (roles: string[]): boolean => {
+  const hasUserType = (types: string[]): boolean => {
     if (!user) return false;
-    return roles.includes(user.role);
+    return types.includes(user.userType);
   };
 
   const value = {
     user,
     token,
+    store,
     isLoading,
     login,
     register,
     logout,
     isAuthenticated: !!user,
-    hasRole,
+    hasUserType,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -209,3 +255,6 @@ export function useAuth() {
   }
   return context;
 }
+
+// Export the context itself for direct access
+export { AuthContext };

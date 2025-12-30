@@ -13,7 +13,6 @@ async function createUser() {
         password: 'password123',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'cashier', // or 'admin'
       }),
     });
 
@@ -38,8 +37,7 @@ curl -X POST http://localhost:3000/api/auth/register \
     "email": "user@example.com",
     "password": "password123", 
     "firstName": "John",
-    "lastName": "Doe",
-    "role": "cashier"
+    "lastName": "Doe"
   }'
 */
 
@@ -51,7 +49,6 @@ $body = @{
   password = "password123"
   firstName = "John"
   lastName = "Doe"
-  role = "cashier"
 } | ConvertTo-Json
 
 Invoke-RestMethod -Uri "http://localhost:3000/api/auth/register" -Method POST -Headers $headers -Body $body

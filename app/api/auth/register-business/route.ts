@@ -3,6 +3,9 @@ import { registerUser } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 import { z } from 'zod';
 
+// Business registration - Creates admin user and associated store
+// This is the ONLY way to create admin users in the system
+
 // Business registration schema
 const businessRegistrationSchema = z.object({
   // User details
@@ -79,8 +82,7 @@ export async function POST(request: NextRequest) {
       email,
       password,
       firstName,
-      lastName,
-      role: 'admin'
+      lastName
     });
 
     if (!userResult.success || !userResult.user) {

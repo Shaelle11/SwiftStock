@@ -3,18 +3,16 @@ import { prisma } from '@/lib/db/prisma';
 import { hashPassword } from '@/lib/auth';
 import { z } from 'zod';
 
-// Registration schema for customers
+// Simplified customer registration schema
 const customerRegistrationSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
   email: z.string().email('Valid email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  storeSlug: z.string().min(1, 'Store is required'), // Store they're signing up for
+  firstName: z.string().min(1, 'First name is required').optional(),
+  lastName: z.string().min(1, 'Last name is required').optional(),
+  // Remove store-specific requirement - customers can shop anywhere
 });
 
-// POST - Register a new customer for a specific store
+// POST - Register a new customer (global account, not store-specific)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -30,20 +28,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { firstName, lastName, email, password, storeSlug } = validationResult.data;
-
-    // Check if store exists
-    const store = await prisma.store.findUnique({
-      where: { slug: storeSlug },
-      select: { id: true, name: true }
-    });
-
-    if (!store) {
-      return NextResponse.json({
-        success: false,
-        message: 'Store not found'
-      }, { status: 404 });
-    }
+    const { firstName, lastName, email, password } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -60,15 +45,14 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create customer user
+    // Create customer user (global account - can shop from any store)
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        firstName,
-        lastName,
-        role: 'CUSTOMER',
-        // Customers don't have storeId - they can shop from multiple stores
+        firstName: firstName || '',
+        lastName: lastName || '',
+        // No storeId - customers are global
         storeId: null,
       }
     });
@@ -81,12 +65,6 @@ export async function POST(request: NextRequest) {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
-      },
-      store: {
-        id: store.id,
-        name: store.name,
-        slug: storeSlug
       }
     });
 

@@ -1,5 +1,8 @@
 // Core type definitions for SwiftStock
-export type UserRole = 'admin' | 'cashier' | 'customer';
+// User types are determined by relationships, not roles:
+// - Business Owner: owns a store (Store.ownerId)
+// - Employee: has storeId but doesn't own the store
+// - Customer: no store association
 
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'completed';
 
@@ -11,11 +14,10 @@ export interface User {
   password?: string; // Optional for client-side
   firstName: string;
   lastName: string;
-  role: UserRole;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  // Store information for admin/cashier users (null for customers)
+  // Store information for business users (null for customers)
   storeId?: string;
   // Customer-specific fields
   phone?: string;
@@ -257,7 +259,6 @@ export interface SalesFilters {
 }
 
 // Constants
-export const USER_ROLES: UserRole[] = ['admin', 'cashier', 'customer'];
 export const ORDER_STATUSES: OrderStatus[] = ['pending', 'confirmed', 'completed', 'cancelled'];
 export const PAYMENT_STATUSES: PaymentStatus[] = ['pending', 'paid', 'failed', 'refunded'];
 export const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'other'] as const;
@@ -273,3 +274,28 @@ export interface AppError {
   message: string;
   details?: unknown;
 }
+
+// User type helper functions
+export const getUserType = (user: User, ownedStores?: Store[]) => {
+  // Business owner: owns a store
+  if (ownedStores && ownedStores.length > 0) {
+    return 'business_owner';
+  }
+  
+  // Employee: associated with a store but doesn't own it
+  if (user.storeId) {
+    return 'employee';
+  }
+  
+  // Customer: no store association
+  return 'customer';
+};
+
+export const isBusinessOwner = (user: User, ownedStores?: Store[]) => 
+  getUserType(user, ownedStores) === 'business_owner';
+
+export const isEmployee = (user: User, ownedStores?: Store[]) => 
+  getUserType(user, ownedStores) === 'employee';
+
+export const isCustomer = (user: User, ownedStores?: Store[]) => 
+  getUserType(user, ownedStores) === 'customer';

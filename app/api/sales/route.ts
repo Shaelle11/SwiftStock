@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only admin and cashiers can make sales
-    if (!['admin', 'cashier'].includes(user.role)) {
+    // Only business owners and employees can make sales
+    if (!['business_owner', 'employee'].includes(user.userType)) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
         subtotal: number;
       }> = [];
 
+      // Validate stock and prepare sale items
       for (const item of items) {
         const product = products.find((p: any) => p.id === item.productId);
         if (!product) {
@@ -115,6 +116,21 @@ export async function POST(request: NextRequest) {
       const tax = calculateVAT(discountedSubtotal);
       const total = discountedSubtotal + tax;
 
+      // Update stock quantities first
+      const stockUpdates = items.map(item => 
+        tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stockQuantity: {
+              decrement: item.quantity
+            }
+          }
+        })
+      );
+
+      // Wait for all stock updates to complete
+      await Promise.all(stockUpdates);
+
       // Create the sale
       const sale = await tx.sale.create({
         data: {
@@ -140,19 +156,10 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // Update stock quantities
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stockQuantity: {
-              decrement: item.quantity
-            }
-          }
-        });
-      }
-
       return sale;
+    }, {
+      maxWait: 10000, // 10 seconds
+      timeout: 30000, // 30 seconds
     });
 
     return NextResponse.json({
@@ -185,8 +192,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only admin and cashiers can view sales
-    if (!['admin', 'cashier'].includes(user.role)) {
+    // Only business owners and employees can view sales
+    if (!['business_owner', 'employee'].includes(user.userType)) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }

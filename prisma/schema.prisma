@@ -16,9 +16,8 @@ model User {
   password  String
   firstName String
   lastName  String
-  role      String   @default("CUSTOMER") // Changed from CASHIER to CUSTOMER as default
   isActive  Boolean  @default(true)
-  storeId   String?  // For business users (admin/cashier), null for customers
+  storeId   String?  // For business users (employees), null for customers
   
   // Customer-specific fields
   phone       String?
@@ -46,6 +45,7 @@ model Store {
   email       String
   slug        String  @unique
   isActive    Boolean @default(true)
+  isPublic    Boolean @default(false) // Whether store is visible to customers
   ownerId     String  @unique
   
   // Branding
@@ -58,12 +58,15 @@ model Store {
   updatedAt DateTime @updatedAt
   
   // Relations
-  owner    User      @relation("StoreOwner", fields: [ownerId], references: [id])
-  products Product[]
-  sales    Sale[]
-  orders   Order[]
-  carts    Cart[]
-  tools    Tool[]    @relation("StoreTools")
+  owner        User         @relation("StoreOwner", fields: [ownerId], references: [id])
+  products     Product[]
+  sales        Sale[]
+  orders       Order[]
+  carts        Cart[]
+  tools        Tool[]       @relation("StoreTools")
+  settings     StoreSettings?
+  taxRecords   TaxRecord[]
+  taxSummaries TaxSummary[]
   
   @@map("stores")
 }
@@ -106,12 +109,18 @@ model Sale {
   paymentMethod String
   notes         String?
   
+  // Tax-specific fields (immutable at sale time)
+  vatRate       Float         @default(0) // VAT rate used (e.g., 0.075 for 7.5%)
+  vatAmount     Float         @default(0) // Exact VAT collected
+  taxableAmount Float         // Amount before VAT
+  
   createdAt DateTime @default(now())
   
   // Relations
-  store   Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  cashier User       @relation("SalesCashier", fields: [cashierId], references: [id])
-  items   SaleItem[]
+  store      Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  cashier    User        @relation("SalesCashier", fields: [cashierId], references: [id])
+  items      SaleItem[]
+  taxRecord  TaxRecord?  @relation("SaleTaxRecord")
   
   @@map("sales")
 }
@@ -186,13 +195,19 @@ model Order {
   paymentMethod String?
   notes         String?
   
+  // Tax-specific fields (immutable at order completion)
+  vatRate       Float         @default(0) // VAT rate used (e.g., 0.075 for 7.5%)
+  vatAmount     Float         @default(0) // Exact VAT collected
+  taxableAmount Float         @default(0) // Amount before VAT
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   // Relations
-  store    Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  customer User?       @relation("CustomerOrders", fields: [customerId], references: [id])
-  items    OrderItem[]
+  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer  User?       @relation("CustomerOrders", fields: [customerId], references: [id])
+  items     OrderItem[]
+  taxRecord TaxRecord?  @relation("OrderTaxRecord")
   
   @@map("orders")
 }
@@ -243,4 +258,86 @@ model Tool {
   storeRelation Store @relation("StoreTools", fields: [storeId], references: [id], onDelete: Cascade)
   
   @@map("tools")
+}
+
+// Tax Management Models
+
+model StoreSettings {
+  id           String  @id @default(cuid())
+  storeId      String  @unique
+  vatEnabled   Boolean @default(true)
+  vatRate      Float   @default(0.075) // 7.5% default for Nigeria
+  taxIdNumber  String? // Business TIN/VAT number
+  
+  // Business registration details
+  businessRegNumber String?
+  businessType      String? // Limited Company, Partnership, etc.
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@map("store_settings")
+}
+
+model TaxRecord {
+  id        String @id @default(cuid())
+  storeId   String
+  saleId    String? // For POS sales
+  orderId   String? // For ecommerce orders
+  
+  // Tax snapshot (immutable)
+  taxableAmount  Float   // Amount before tax
+  vatRate        Float   // Rate used at time of sale
+  vatCollected   Float   // Exact VAT amount collected
+  totalAmount    Float   // Final amount charged
+  
+  // Transaction details
+  transactionType String  // "SALE" or "ORDER"
+  paymentMethod   String
+  
+  // Tax period categorization
+  taxPeriod      String  // Format: "YYYY-MM" (e.g., "2025-01")
+  taxYear        Int     // For annual reporting
+  taxMonth       Int     // For monthly reporting
+  
+  createdAt DateTime @default(now())
+  
+  // Relations
+  store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  sale  Sale?  @relation("SaleTaxRecord", fields: [saleId], references: [id])
+  order Order? @relation("OrderTaxRecord", fields: [orderId], references: [id])
+  
+  // Ensure one tax record per transaction
+  @@unique([saleId])
+  @@unique([orderId])
+  @@map("tax_records")
+}
+
+model TaxSummary {
+  id      String @id @default(cuid())
+  storeId String
+  period  String  // Format: "YYYY-MM"
+  
+  // Aggregated totals
+  totalSales       Float // Total taxable sales
+  totalVatCollected Float // Total VAT collected
+  totalOrders      Int   // Number of transactions
+  totalRevenue     Float // Gross revenue (including VAT)
+  
+  // Monthly breakdown
+  year  Int
+  month Int
+  
+  // Summary metadata
+  generatedAt DateTime @default(now())
+  isFinalized Boolean  @default(false) // Prevents modification after period close
+  
+  // Relations
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@unique([storeId, period])
+  @@map("tax_summaries")
 }

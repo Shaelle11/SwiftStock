@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Check if user has access to this product
-    if (user.role !== 'admin' && user.storeId !== product.storeId) {
+    if (user.userType !== 'business_owner' && user.storeId !== product.storeId) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized access to this product' },
         { status: 403 }
@@ -85,8 +85,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Only admins can update products
-    if (user.role !== 'admin') {
+    // Only business owners can update products
+    if (user.userType !== 'business_owner') {
       return NextResponse.json(
         { success: false, message: 'Only admins can update products' },
         { status: 403 }
@@ -182,8 +182,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Only admins can delete products
-    if (user.role !== 'admin') {
+    // Only business owners can delete products
+    if (user.userType !== 'business_owner') {
       return NextResponse.json(
         { success: false, message: 'Only admins can delete products' },
         { status: 403 }

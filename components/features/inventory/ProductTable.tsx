@@ -70,12 +70,12 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
   }
 
   return (
-    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-      <table className="min-w-full divide-y divide-gray-300">
+    <div className="overflow-x-auto shadow ring-1 ring-gray-200 md:rounded-lg">
+      <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
               onClick={() => handleSort('name')}
             >
               <div className="flex items-center space-x-1">
@@ -88,7 +88,7 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
               </div>
             </th>
             <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
               onClick={() => handleSort('category')}
             >
               <div className="flex items-center space-x-1">
@@ -101,7 +101,7 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
               </div>
             </th>
             <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
               onClick={() => handleSort('sellingPrice')}
             >
               <div className="flex items-center space-x-1">
@@ -114,7 +114,7 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
               </div>
             </th>
             <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
               onClick={() => handleSort('stockQuantity')}
             >
               <div className="flex items-center space-x-1">
@@ -126,11 +126,11 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
                 )}
               </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
             <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
               onClick={() => handleSort('updatedAt')}
             >
               <div className="flex items-center space-x-1">
@@ -142,18 +142,18 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
                 )}
               </div>
             </th>
-            <th className="relative px-6 py-3">
+            <th className="relative px-3 sm:px-6 py-3">
               <span className="sr-only">Actions</span>
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-100">
           {sortedProducts.map((product) => {
             const stockStatus = getStockStatus(product);
             
             return (
               <tr key={product.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
                       {product.imageUrl ? (
@@ -182,10 +182,10 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{product.category}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {formatCurrency(product.sellingPrice)}
                   </div>
@@ -193,21 +193,21 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
                     Cost: {formatCurrency(product.costPrice)}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{product.stockQuantity}</div>
                   <div className="text-sm text-gray-500">
                     Low: {product.lowStockThreshold}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="hidden sm:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${stockStatus.className}`}>
                     {stockStatus.text}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="hidden lg:table-cell px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDateTime(product.updatedAt)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center space-x-2">
                     {onView && (
                       <button

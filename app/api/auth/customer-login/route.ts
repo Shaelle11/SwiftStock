@@ -5,10 +5,10 @@ import { z } from 'zod';
 const customerLoginSchema = z.object({
   email: z.string().email('Valid email is required'),
   password: z.string().min(1, 'Password is required'),
-  storeSlug: z.string().min(1, 'Store is required'), // Which store they're shopping at
+  // Remove storeSlug requirement - customers login globally
 });
 
-// POST - Login customer for a specific store
+// POST - Login customer (global login, not store-specific)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, password, storeSlug } = validationResult.data;
+    const { email, password } = validationResult.data;
 
     // Attempt login
     const result = await loginUser({ email, password });
@@ -33,18 +33,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(result, { status: 401 });
     }
 
-    // Ensure user is a customer
-    if (result.user?.role !== 'customer') {
+    // Ensure user is a customer (not business owner or employee)
+    if (result.user?.userType !== 'customer') {
       return NextResponse.json({
         success: false,
         message: 'Invalid account type for customer login'
       }, { status: 403 });
     }
 
-    // Return success with store context
+    // Return success - customer can now shop at any store
     return NextResponse.json({
-      ...result,
-      store: { slug: storeSlug }
+      ...result
     });
 
   } catch (error) {

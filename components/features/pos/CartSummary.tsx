@@ -22,6 +22,13 @@ interface CartSummaryProps {
   onProcessSale: (paymentMethod: string) => void;
   isProcessing: boolean;
   error: string | null;
+  brandStyles?: {
+    primaryColor: string;
+    buttonStyle: { backgroundColor: string; borderColor: string; };
+    linkStyle: { color: string; };
+    headerStyle: { borderBottomColor: string; };
+    badgeStyle: { backgroundColor: string; color: string; };
+  };
 }
 
 export default function CartSummary({
@@ -34,7 +41,8 @@ export default function CartSummary({
   onClearCart,
   onProcessSale,
   isProcessing,
-  error
+  error,
+  brandStyles
 }: CartSummaryProps) {
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
@@ -155,7 +163,8 @@ export default function CartSummary({
         <button
           onClick={handleProcessSale}
           disabled={cart.length === 0 || isProcessing}
-          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={brandStyles?.buttonStyle || { backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}
         >
           {isProcessing ? 'Processing...' : `Process Sale ${total > 0 ? formatCurrency(total) : ''}`}
         </button>

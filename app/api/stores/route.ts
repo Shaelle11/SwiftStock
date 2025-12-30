@@ -2,6 +2,74 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 
+export async function GET(request: NextRequest) {
+  try {
+    const { user, error } = await verifyAuth(request);
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check if this is a request for owned stores
+    const url = new URL(request.url);
+    const isOwnerRequest = url.searchParams.get('owner') === 'true';
+
+    if (isOwnerRequest) {
+      // Get stores owned by the current user
+      const stores = await prisma.store.findMany({
+        where: { 
+          ownerId: user.id 
+        },
+        include: {
+          _count: {
+            select: {
+              products: true,
+              sales: true
+            }
+          }
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        stores: stores
+      });
+    } else {
+      // Get all public stores
+      const stores = await prisma.store.findMany({
+        where: { 
+          isActive: true 
+        },
+        include: {
+          _count: {
+            select: {
+              products: true,
+              sales: true
+            }
+          }
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        stores: stores
+      });
+    }
+
+  } catch (error) {
+    console.error('Store fetch error:', error);
+    
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to fetch stores',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { user, error } = await verifyAuth(request);
@@ -14,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins can create stores
-    if (user.role !== 'admin') {
+    if (user.userType !== 'business_owner') {
       return NextResponse.json(
         { success: false, message: 'Only admins can create stores' },
         { status: 403 }

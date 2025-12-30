@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { registerUser } from '@/lib/auth';
 import { z } from 'zod';
 
+// SECURITY NOTE: This endpoint is for general customer registration only
+// Admin registration: Use /api/auth/register-business
+// Employee registration: Use /api/auth/register-employee (admin-only)
+
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  role: z.enum(['admin', 'cashier', 'customer']).optional()
+  // Remove role option - general registration is customer only
 });
 
 export async function POST(request: NextRequest) {
@@ -50,15 +54,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, firstName, lastName, role } = validationResult.data;
+    const { email, password, firstName, lastName } = validationResult.data;
 
-    // Register user
+    // Register user - general registration defaults to customer
     const result = await registerUser({
       email,
       password,
       firstName,
-      lastName,
-      role
+      lastName
     });
 
     console.log('Registration result:', JSON.stringify(result, null, 2));

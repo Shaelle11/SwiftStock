@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/db/prisma';
-import type { UserRole } from '@/lib/types';
+import type { Store } from '@/lib/types';
+import { getUserType } from '@/lib/types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key-here-default-for-build';
 
@@ -10,8 +11,9 @@ export interface AuthUser {
   email: string;
   firstName: string;
   lastName: string;
-  role: UserRole;
+  userType: string; // 'business_owner' | 'employee' | 'customer'
   storeId?: string;
+  ownedStores?: Store[];
 }
 
 export interface LoginCredentials {
@@ -24,7 +26,7 @@ export interface RegisterData {
   password: string;
   firstName: string;
   lastName: string;
-  role?: UserRole;
+  storeId?: string; // For employees
 }
 
 export interface AuthResponse {
@@ -57,8 +59,10 @@ export function generateToken(user: AuthUser): string {
     { 
       id: user.id, 
       email: user.email, 
-      role: user.role,
-      storeId: user.storeId 
+      userType: user.userType,
+      storeId: user.storeId,
+      firstName: user.firstName,
+      lastName: user.lastName
     },
     JWT_SECRET,
     { expiresIn: '24h' }
@@ -70,13 +74,20 @@ export function generateToken(user: AuthUser): string {
  */
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & { id: string; email: string; role: string; storeId?: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload & { 
+      id: string; 
+      email: string; 
+      userType: string; 
+      storeId?: string;
+      firstName: string;
+      lastName: string;
+    };
     return {
       id: decoded.id,
       email: decoded.email,
       firstName: decoded.firstName || '',
       lastName: decoded.lastName || '',
-      role: decoded.role.toLowerCase() as UserRole,
+      userType: decoded.userType || 'customer',
       storeId: decoded.storeId
     };
   } catch {
@@ -139,19 +150,45 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
         password: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
-        role: (data.role?.toUpperCase() || 'CASHIER') as 'ADMIN' | 'CASHIER' | 'CUSTOMER'
+        storeId: data.storeId || null // For employees
       }
     });
 
     console.log('User created successfully:', user.id);
+
+    // Determine user type based on relationships
+    const ownedStores = await prisma.store.findMany({
+      where: { ownerId: user.id }
+    });
+
+    // Create minimal user object for type checking
+    const userForTypeCheck = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      storeId: user.storeId,
+      phone: user.phone,
+      address: user.address
+    };
 
     const authUser: AuthUser = {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role.toLowerCase() as 'admin' | 'cashier' | 'customer',
-      storeId: user.storeId || undefined
+      userType: getUserType(userForTypeCheck, ownedStores.map(s => ({
+        ...s,
+        description: s.description || undefined
+      }))),
+      storeId: user.storeId || undefined,
+      ownedStores: ownedStores.map(s => ({
+        ...s,
+        description: s.description || undefined
+      }))
     };
 
     const token = generateToken(authUser);
@@ -225,9 +262,12 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
       };
     }
 
-    // Find user by email
+    // Find user by email with owned stores
     const user = await prisma.user.findUnique({
-      where: { email: credentials.email }
+      where: { email: credentials.email },
+      include: {
+        ownedStore: true // Include owned store if any
+      }
     });
 
     console.log('User found:', !!user);
@@ -251,13 +291,37 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
       };
     }
 
+    // Get all owned stores for user type determination
+    const ownedStores = user.ownedStore ? [user.ownedStore] : [];
+
+    // Create minimal user object for type checking
+    const userForTypeCheck = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      storeId: user.storeId,
+      phone: user.phone,
+      address: user.address
+    };
+
     const authUser: AuthUser = {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role.toLowerCase() as 'admin' | 'cashier' | 'customer',
-      storeId: user.storeId || undefined
+      userType: getUserType(userForTypeCheck, ownedStores.map(s => ({
+        ...s,
+        description: s.description || undefined
+      }))),
+      storeId: user.storeId || undefined,
+      ownedStores: ownedStores.map(s => ({
+        ...s,
+        description: s.description || undefined
+      }))
     };
 
     const token = generateToken(authUser);
@@ -298,7 +362,18 @@ export async function getUserById(id: string): Promise<AuthUser | null> {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role.toLowerCase() as 'admin' | 'cashier' | 'customer',
+      userType: getUserType({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        storeId: user.storeId,
+        phone: user.phone,
+        address: user.address
+      }, user.ownedStore ? [{ ...user.ownedStore, description: user.ownedStore.description || undefined }] : []),
       storeId: user.ownedStore?.id
     };
   } catch {
@@ -308,24 +383,24 @@ export async function getUserById(id: string): Promise<AuthUser | null> {
 }
 
 /**
- * Check if user has required role
+ * Check if user has required user type
  */
-export function hasRole(user: AuthUser, requiredRoles: UserRole[]): boolean {
-  return requiredRoles.includes(user.role);
+export function hasUserType(user: AuthUser, requiredTypes: string[]): boolean {
+  return requiredTypes.includes(user.userType);
 }
 
 /**
- * Check if user is admin
+ * Check if user is a business owner
  */
-export function isAdmin(user: AuthUser): boolean {
-  return user.role === 'admin';
+export function isBusinessOwner(user: AuthUser): boolean {
+  return user.userType === 'business_owner';
 }
 
 /**
- * Check if user is cashier or admin
+ * Check if user is a business user (owner or employee)
  */
-export function canAccessPOS(user: AuthUser): boolean {
-  return ['admin', 'cashier'].includes(user.role);
+export function isBusinessUser(user: AuthUser): boolean {
+  return ['business_owner', 'employee'].includes(user.userType);
 }
 
 /**

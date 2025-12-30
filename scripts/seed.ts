@@ -13,7 +13,6 @@ async function seed() {
         password: adminPassword,
         firstName: 'Admin',
         lastName: 'User',
-        role: 'ADMIN',
         isActive: true,
       },
     });
@@ -28,7 +27,6 @@ async function seed() {
         password: cashierPassword,
         firstName: 'Cashier',
         lastName: 'User',
-        role: 'CASHIER',
         isActive: true,
       },
     });

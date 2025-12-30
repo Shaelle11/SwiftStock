@@ -1,70 +1,105 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { verifyAuth } from '@/lib/auth';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    // Find the user without a store (should be the existing admin user)
-    const userWithoutStore = await prisma.user.findFirst({
-      where: {
-        storeId: null,
-        role: 'ADMIN'
-      }
-    });
-
-    if (!userWithoutStore) {
+    // Get current user from auth
+    const { user, error } = await verifyAuth(request);
+    if (!user) {
       return NextResponse.json({
         success: false,
-        message: 'No admin user without a store found'
-      }, { status: 404 });
+        message: error || 'Authentication required'
+      }, { status: 401 });
     }
 
-    // Check if a store already exists for this user as owner
+    // Parse request body
+    const body = await request.json();
+    const { name, description, address, phone, email, primaryColor, logoUrl } = body;
+
+    // Validate required fields
+    if (!name || !address || !phone || !email) {
+      return NextResponse.json({
+        success: false,
+        message: 'Missing required fields: name, address, phone, email'
+      }, { status: 400 });
+    }
+
+    // Check if user already owns a store
     const existingStore = await prisma.store.findFirst({
-      where: { ownerId: userWithoutStore.id }
+      where: { ownerId: user.id }
     });
 
     if (existingStore) {
-      // Just update the user with the existing store ID
-      await prisma.user.update({
-        where: { id: userWithoutStore.id },
-        data: { storeId: existingStore.id }
+      // Update the existing store instead of creating a new one
+      const updatedStore = await prisma.store.update({
+        where: { id: existingStore.id },
+        data: {
+          name,
+          description: description || null,
+          address,
+          phone,
+          email,
+          primaryColor: primaryColor || '#3B82F6',
+          logoUrl: logoUrl || null,
+          slug: existingStore.slug, // Keep existing slug
+          isActive: true
+        }
       });
 
       return NextResponse.json({
         success: true,
-        message: 'User associated with existing store',
-        store: existingStore,
-        user: {
-          id: userWithoutStore.id,
-          email: userWithoutStore.email,
-          firstName: userWithoutStore.firstName,
-          lastName: userWithoutStore.lastName
+        message: 'Store updated successfully',
+        store: {
+          id: updatedStore.id,
+          name: updatedStore.name,
+          slug: updatedStore.slug,
+          description: updatedStore.description,
+          address: updatedStore.address,
+          phone: updatedStore.phone,
+          email: updatedStore.email,
+          primaryColor: updatedStore.primaryColor,
+          logoUrl: updatedStore.logoUrl
         }
       });
     }
 
-    // Create a new store for the user
+    // Generate unique slug
+    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const timestamp = Date.now();
+    const slug = `${baseSlug}-${timestamp}`;
+
+    // Create a new store
     const store = await prisma.store.create({
       data: {
-        name: `${userWithoutStore.firstName}'s SwiftStock Store`,
-        description: 'SwiftStock inventory management store',
-        address: '123 Business Avenue, City',
-        phone: '+234-123-456-7890',
-        email: userWithoutStore.email,
-        slug: `${userWithoutStore.firstName.toLowerCase()}-store-${Date.now()}`,
-        ownerId: userWithoutStore.id,
+        name,
+        description: description || null,
+        address,
+        phone,
+        email,
+        primaryColor: primaryColor || '#3B82F6',
+        logoUrl: logoUrl || null,
+        slug,
+        ownerId: user.id,
+        isActive: true
       },
     });
 
-    // Update the user with the new store ID
-    await prisma.user.update({
-      where: { id: userWithoutStore.id },
-      data: { storeId: store.id }
+    // Update the user with the new store ID if they don't have one
+    const currentUser = await prisma.user.findUnique({
+      where: { id: user.id }
     });
+
+    if (currentUser && !currentUser.storeId) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { storeId: store.id }
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Store created and user associated successfully',
+      message: 'Store created successfully',
       store: {
         id: store.id,
         name: store.name,
@@ -73,12 +108,8 @@ export async function POST() {
         address: store.address,
         phone: store.phone,
         email: store.email,
-      },
-      user: {
-        id: userWithoutStore.id,
-        email: userWithoutStore.email,
-        firstName: userWithoutStore.firstName,
-        lastName: userWithoutStore.lastName
+        primaryColor: store.primaryColor,
+        logoUrl: store.logoUrl
       }
     });
 

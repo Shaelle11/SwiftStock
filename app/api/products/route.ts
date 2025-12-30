@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Only admin and cashiers can view products
-    if (!['admin', 'cashier'].includes(user.role)) {
+    // Only business owners and employees can view products
+    if (!['business_owner', 'employee'].includes(user.userType)) {
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only admins can create products
-    if (user.role !== 'admin') {
+    // Only business owners can create products
+    if (user.userType !== 'business_owner') {
       return NextResponse.json(
         { success: false, message: 'Only admins can create products' },
         { status: 403 }
