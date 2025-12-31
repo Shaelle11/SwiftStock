@@ -12,8 +12,9 @@ export default function SettingsPage() {
     email: string;
     address: string;
     primaryColor: string;
-    secondaryColor: string;
-    accentColor: string;
+    secondaryColor?: string;
+    accentColor?: string;
+    logoUrl?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
