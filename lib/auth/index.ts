@@ -170,9 +170,9 @@ export async function registerUser(data: RegisterData): Promise<AuthResponse> {
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      storeId: user.storeId,
-      phone: user.phone,
-      address: user.address
+      storeId: user.storeId || undefined,
+      phone: user.phone || undefined,
+      address: user.address || undefined
     };
 
     const authUser: AuthUser = {
@@ -303,9 +303,9 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      storeId: user.storeId,
-      phone: user.phone,
-      address: user.address
+      storeId: user.storeId || undefined,
+      phone: user.phone || undefined,
+      address: user.address || undefined
     };
 
     const authUser: AuthUser = {
