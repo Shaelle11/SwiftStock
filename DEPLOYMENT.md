@@ -1,8 +1,47 @@
-# Deployment Troubleshooting Guide
+# Deployment Guide for SwiftStock
 
-## Vercel Deployment Issues
+## Quick Fix for Current Error
 
-### Common Build Errors
+**Error**: `Environment variable not found: DATABASE_URL`
+
+### Immediate Solution:
+1. **Go to Vercel Dashboard** → Your SwiftStock project
+2. **Settings** → **Environment Variables** 
+3. **Add these variables:**
+
+```
+DATABASE_URL=postgresql://your-connection-string
+JWT_SECRET=your-super-secret-jwt-key-make-it-long-and-random
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_SECRET=your-nextauth-secret-also-long-and-random
+```
+
+4. **Redeploy** from Deployments tab
+
+## Database Setup Options
+
+### Option A: Vercel Postgres (Recommended)
+1. Go to your Vercel project dashboard
+2. Click on "Storage" tab
+3. Click "Create Database" → "Postgres"
+4. Copy the connection string provided
+5. Add it as `DATABASE_URL` in Environment Variables
+
+### Option B: Supabase (Free)
+1. Go to [supabase.com](https://supabase.com) and create account
+2. Create new project
+3. Go to Settings → Database
+4. Copy the connection string
+5. Replace `[YOUR-PASSWORD]` with your actual password
+6. Add as `DATABASE_URL` in Vercel Environment Variables
+
+### Option C: Neon (Free)
+1. Go to [neon.tech](https://neon.tech) and create account
+2. Create new project
+3. Copy the connection string from dashboard
+4. Add as `DATABASE_URL` in Vercel Environment Variables
+
+## Common Build Errors
 
 1. **"Failed to collect page data for /api/auth/login"**
    - This usually happens when environment variables are missing during build

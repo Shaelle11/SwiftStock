@@ -2,7 +2,8 @@
   "buildCommand": "npm run vercel-build",
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "true",
-    "SKIP_ENV_VALIDATION": "true"
+    "SKIP_ENV_VALIDATION": "true",
+    "DATABASE_URL": "postgresql://dummy:dummy@localhost:5432/dummy"
   },
   "functions": {
     "app/api/**/*.ts": {

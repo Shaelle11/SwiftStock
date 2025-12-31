@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx scripts/seed.ts",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "vercel-build": "node scripts/setup-env.js && npx prisma generate && next build",
     "check-deployment": "node scripts/check-deployment.js"
   },
   "dependencies": {
