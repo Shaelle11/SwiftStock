@@ -16,8 +16,8 @@ export async function GET() {
           email: true,
           firstName: true,
           lastName: true,
-          role: true,
           storeId: true,
+          isActive: true,
         }
       }),
       prisma.store.findMany({
