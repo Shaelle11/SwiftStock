@@ -143,6 +143,10 @@ export async function POST(request: NextRequest) {
           total,
           paymentMethod: paymentMethod.toUpperCase() as 'CASH' | 'CARD' | 'TRANSFER' | 'OTHER',
           notes,
+          // Tax-specific fields
+          vatRate: 0.15, // 15% VAT rate
+          vatAmount: tax,
+          taxableAmount: discountedSubtotal,
           items: {
             create: saleItems
           }
