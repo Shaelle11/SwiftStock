@@ -33,7 +33,7 @@ export default function OrdersPage() {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
-            <p className="text-gray-500 mb-6">When you place orders, they'll appear here for easy tracking.</p>
+            <p className="text-gray-500 mb-6">When you place orders, they&apos;ll appear here for easy tracking.</p>
             <button 
               onClick={() => router.push('/explore')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"

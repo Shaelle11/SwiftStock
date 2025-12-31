@@ -5,7 +5,16 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsPage() {
   const { user, token } = useAuth();
-  const [store, setStore] = useState<any>(null);
+  const [store, setStore] = useState<{
+    name: string;
+    description?: string;
+    phone: string;
+    email: string;
+    address: string;
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);

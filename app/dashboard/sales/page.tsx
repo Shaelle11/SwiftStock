@@ -22,7 +22,13 @@ export default function SalesPage() {
     if (!store || !stats.recentSales.length) return;
     
     const headers = ['Date', 'Customer', 'Total', 'Items', 'Payment Method'];
-    const data = stats.recentSales.map((sale: any) => ({
+    const data = stats.recentSales.map((sale: {
+      createdAt: string;
+      customerName?: string;
+      total: number;
+      items?: unknown[];
+      paymentMethod?: string;
+    }) => ({
       'Date': new Date(sale.createdAt).toLocaleDateString(),
       'Customer': sale.customerName || 'Walk-in Customer',
       'Total': formatCurrency(sale.total),
@@ -268,11 +274,16 @@ export default function SalesPage() {
             </div>
           ) : stats.recentSales.length > 0 ? (
             <div className="space-y-3">
-              {stats.recentSales.slice(0, 10).map((sale: any) => (
+              {stats.recentSales.slice(0, 10).map((sale: {
+                id: string;
+                total: number;
+                createdAt: string;
+                items: { quantity: number; productName: string }[];
+              }) => (
                 <div key={sale.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900">
-                      {sale.items.map((item: any) => `${item.quantity}x ${item.productName}`).join(', ')}
+                      {sale.items.map((item: { quantity: number; productName: string }) => `${item.quantity}x ${item.productName}`).join(', ')}
                     </div>
                     <div className="text-xs text-gray-500">
                       {new Date(sale.createdAt).toLocaleString()}

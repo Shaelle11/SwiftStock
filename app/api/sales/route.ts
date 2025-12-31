@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
       // Validate stock and prepare sale items
       for (const item of items) {
-        const product = products.find((p: any) => p.id === item.productId);
+        const product = products.find((p: { id: string; sellingPrice: number; stockQuantity: number; name: string }) => p.id === item.productId);
         if (!product) {
           throw new Error(`Product with ID ${item.productId} not found`);
         }

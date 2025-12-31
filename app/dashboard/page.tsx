@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/utils/api';
 import { formatCurrency } from '@/lib/utils/api';
+import Link from 'next/link';
 
 interface DashboardStats {
   todaysSales: number;
@@ -211,7 +212,7 @@ export default function DashboardPage() {
         </div>
         <div className="p-6">
           <div className="flex flex-wrap gap-4">
-            <a
+            <Link
               href="/dashboard/inventory/new"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
             >
@@ -219,9 +220,9 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Add Product
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/dashboard/pos"
               className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 transition-colors"
             >
@@ -229,9 +230,9 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m2.6 8L6 5H2m1 8h16m-7 4v8m0 0v-8m0 8h4m-4 0h-4" />
               </svg>
               Open POS
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/dashboard/inventory"
               className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 flex items-center gap-2 transition-colors"
             >
@@ -239,7 +240,7 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               View Inventory
-            </a>
+            </Link>
           </div>
         </div>
       </div>

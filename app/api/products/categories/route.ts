@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const categories = products.map((p: any) => p.category);
+    const categories = products.map((p: { category: string }) => p.category);
 
     return NextResponse.json({
       success: true,
