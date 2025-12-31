@@ -370,9 +370,9 @@ export async function getUserById(id: string): Promise<AuthUser | null> {
         isActive: user.isActive,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        storeId: user.storeId,
-        phone: user.phone,
-        address: user.address
+        storeId: user.storeId || undefined,
+        phone: user.phone || undefined,
+        address: user.address || undefined
       }, user.ownedStore ? [{ ...user.ownedStore, description: user.ownedStore.description || undefined }] : []),
       storeId: user.ownedStore?.id
     };
