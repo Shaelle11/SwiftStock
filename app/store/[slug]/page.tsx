@@ -44,12 +44,6 @@ export default function StorePage() {
     paymentMethod: 'cash',
   });
 
-  useEffect(() => {
-    if (slug) {
-      loadStoreData();
-    }
-  }, [slug, loadStoreData]);
-
   const loadStoreData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -77,6 +71,12 @@ export default function StorePage() {
       setLoading(false);
     }
   }, [slug, searchQuery, selectedCategory]);
+
+  useEffect(() => {
+    if (slug) {
+      loadStoreData();
+    }
+  }, [slug, loadStoreData]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCart(prevCart => {
