@@ -44,6 +44,36 @@ export async function POST(req: NextRequest) {
         column: 'country',
         type: 'TEXT',
         query: 'ALTER TABLE stores ADD COLUMN IF NOT EXISTS "country" TEXT DEFAULT \'Nigeria\';'
+      },
+      {
+        table: 'stores',
+        column: 'deployedAt',
+        type: 'TIMESTAMP',
+        query: 'ALTER TABLE stores ADD COLUMN IF NOT EXISTS "deployedAt" TIMESTAMP;'
+      },
+      {
+        table: 'stores',
+        column: 'logoUrl',
+        type: 'TEXT',
+        query: 'ALTER TABLE stores ADD COLUMN IF NOT EXISTS "logoUrl" TEXT;'
+      },
+      {
+        table: 'stores',
+        column: 'primaryColor',
+        type: 'TEXT',
+        query: 'ALTER TABLE stores ADD COLUMN IF NOT EXISTS "primaryColor" TEXT DEFAULT \'#000000\';'
+      },
+      {
+        table: 'stores',
+        column: 'secondaryColor',
+        type: 'TEXT',
+        query: 'ALTER TABLE stores ADD COLUMN IF NOT EXISTS "secondaryColor" TEXT DEFAULT \'#ffffff\';'
+      },
+      {
+        table: 'stores',
+        column: 'accentColor',
+        type: 'TEXT',
+        query: 'ALTER TABLE stores ADD COLUMN IF NOT EXISTS "accentColor" TEXT DEFAULT \'#3b82f6\';'
       }
     ];
     
