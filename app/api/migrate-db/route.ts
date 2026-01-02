@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     
     console.log('PostgreSQL database detected, pushing schema...');
     
-    // Force push the current schema to the database
-    const output = execSync('npx prisma db push --force-reset --accept-data-loss', { 
+    // Force push the current schema to the database to match exactly
+    const output = execSync('npx prisma db push --force-reset --accept-data-loss --skip-generate', { 
       encoding: 'utf8',
       env: { ...process.env, DATABASE_URL: dbUrl }
     });
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Database schema updated successfully',
+      message: 'Database schema synchronized successfully',
       output: output
     });
     
