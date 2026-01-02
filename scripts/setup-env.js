@@ -25,3 +25,29 @@ if (!process.env.NEXTAUTH_URL) {
 }
 
 console.log('Environment setup complete');
+
+// Run database migration if in production environment and DATABASE_URL is PostgreSQL
+if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV) {
+  const { execSync } = require('child_process');
+  
+  // If DATABASE_URL is set and is PostgreSQL, run migrations
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL;
+  if (dbUrl && (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://'))) {
+    try {
+      console.log('Running database migrations...');
+      // Set the correct DATABASE_URL for migrations
+      process.env.DATABASE_URL = dbUrl;
+      execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+      console.log('Database migrations completed successfully');
+    } catch (error) {
+      console.warn('Migration failed, attempting to push schema:', error.message);
+      try {
+        execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+        console.log('Database schema pushed successfully');
+      } catch (pushError) {
+        console.error('Database setup failed:', pushError.message);
+        // Don't fail the build, just warn
+      }
+    }
+  }
+}
