@@ -26,19 +26,45 @@ export async function POST(req: NextRequest) {
     
     console.log('PostgreSQL database detected, pushing schema...');
     
-    // Force push the current schema to the database to match exactly
-    const output = execSync('npx prisma db push --force-reset --accept-data-loss --skip-generate', { 
-      encoding: 'utf8',
-      env: { ...process.env, DATABASE_URL: dbUrl }
-    });
-    
-    console.log('Schema push output:', output);
-    
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Database schema synchronized successfully',
-      output: output
-    });
+    try {
+      // First try without force reset to preserve data
+      console.log('Attempting safe schema push...');
+      const output = execSync('npx prisma db push --accept-data-loss --skip-generate', { 
+        encoding: 'utf8',
+        env: { ...process.env, DATABASE_URL: dbUrl }
+      });
+      
+      console.log('Safe schema push successful:', output);
+      
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Database schema synchronized successfully (safe mode)',
+        output: output
+      });
+      
+    } catch (safeError) {
+      console.log('Safe push failed, trying with force reset...');
+      
+      try {
+        // If safe push fails, try with force reset
+        const output = execSync('npx prisma db push --force-reset --accept-data-loss --skip-generate', { 
+          encoding: 'utf8',
+          env: { ...process.env, DATABASE_URL: dbUrl }
+        });
+        
+        console.log('Force reset schema push successful:', output);
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Database schema synchronized successfully (with reset)',
+          output: output
+        });
+        
+      } catch (forceError) {
+        console.error('Both safe and force reset failed');
+        throw forceError;
+      }
+    }
     
   } catch (error) {
     console.error('Database migration failed:', error);
