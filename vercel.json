@@ -2,10 +2,7 @@
   "buildCommand": "npm run vercel-build",
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "true",
-    "SKIP_ENV_VALIDATION": "true",
-    "DATABASE_URL": "postgresql://dummy:dummy@localhost:5432/dummy",
-    "JWT_SECRET": "dummy-jwt-secret-for-build-only",
-    "NEXTAUTH_SECRET": "dummy-nextauth-secret-for-build-only"
+    "SKIP_ENV_VALIDATION": "true"
   },
   "functions": {
     "app/api/**/*.ts": {
