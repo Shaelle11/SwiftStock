@@ -55,10 +55,11 @@ export async function POST(req: NextRequest) {
         await prisma.$executeRawUnsafe(col.query);
         results.push({ column: `${col.table}.${col.column}`, status: 'added' });
       } catch (error) {
-        if (error.message.includes('already exists')) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('already exists')) {
           results.push({ column: `${col.table}.${col.column}`, status: 'already exists' });
         } else {
-          results.push({ column: `${col.table}.${col.column}`, status: 'error', error: error.message });
+          results.push({ column: `${col.table}.${col.column}`, status: 'error', error: errorMessage });
         }
       }
     }
@@ -73,10 +74,12 @@ export async function POST(req: NextRequest) {
     
   } catch (error) {
     console.error('Database schema update failed:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorString = error instanceof Error ? error.toString() : String(error);
     return NextResponse.json({ 
       success: false, 
-      message: `Database schema update failed: ${error.message}`,
-      error: error.toString()
+      message: `Database schema update failed: ${errorMessage}`,
+      error: errorString
     });
   } finally {
     await prisma.$disconnect();

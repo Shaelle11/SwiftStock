@@ -42,10 +42,12 @@ export async function POST(req: NextRequest) {
     
   } catch (error) {
     console.error('Database migration failed:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorString = error instanceof Error ? error.toString() : String(error);
     return NextResponse.json({ 
       success: false, 
-      message: `Database migration failed: ${error.message}`,
-      error: error.toString()
+      message: `Database migration failed: ${errorMessage}`,
+      error: errorString
     });
   }
 }
