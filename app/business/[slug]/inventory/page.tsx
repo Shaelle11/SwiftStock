@@ -65,9 +65,7 @@ export default function BusinessInventory() {
       if (status) params.status = status;
       if (sortBy) params.sort = sortBy;
 
-      const response = await api.get<PaginatedResponse<Product>>('/api/products', params, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get<PaginatedResponse<Product>>('/api/products', params);
       
       if (response.success && response.data) {
         setProducts(response.data.items);
@@ -142,9 +140,7 @@ export default function BusinessInventory() {
     }
 
     try {
-      const response = await api.delete(`/api/products/${product.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.delete(`/api/products/${product.id}`);
       
       if (response.success) {
         loadProducts(currentPage, searchQuery, selectedCategory, statusFilter);
@@ -468,7 +464,6 @@ export default function BusinessInventory() {
         product={selectedProduct}
         onSave={() => loadProducts(currentPage, searchQuery, selectedCategory, statusFilter)}
         storeId={businessId}
-        store={store}
       />
 
       <StockAdjustmentModal
@@ -476,7 +471,6 @@ export default function BusinessInventory() {
         onClose={() => setShowStockModal(false)}
         product={selectedProduct}
         onSave={() => loadProducts(currentPage, searchQuery, selectedCategory, statusFilter)}
-        store={store}
       />
     </div>
   );

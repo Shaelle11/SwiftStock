@@ -160,7 +160,7 @@ export default function POSProductGrid({
                     </h3>
                     
                     <div className="text-sm text-gray-600 mb-2">
-                      {product.sku && <span>SKU: {product.sku}</span>}
+                      {product.barcode && <span>Barcode: {product.barcode}</span>}
                     </div>
 
                     <div className="flex items-center justify-between mb-3">
@@ -214,11 +214,4 @@ export default function POSProductGrid({
 }
 
 // Utility class for line clamping
-const styles = `
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-`;
+// CSS classes for line clamping are available in Tailwind CSS v3+

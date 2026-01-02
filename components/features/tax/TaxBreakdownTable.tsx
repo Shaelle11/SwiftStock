@@ -13,7 +13,7 @@ interface VATRecord {
 interface TaxBreakdownTableProps {
   records: VATRecord[];
   periodLabel: string;
-  brandStyles: any;
+  brandStyles: ReturnType<typeof import('@/lib/store-branding').getStoreBrandStyles>;
 }
 
 export default function TaxBreakdownTable({ records, periodLabel, brandStyles }: TaxBreakdownTableProps) {

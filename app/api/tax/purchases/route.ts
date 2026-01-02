@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
       userId = decoded.userId;
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { message: 'Unauthorized: Invalid token' },
         { status: 401 }
@@ -55,7 +55,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query conditions
-    const whereConditions: any = {
+    const whereConditions: {
+      storeId: string;
+      taxPeriodId?: string;
+    } = {
       storeId: storeId,
     };
 
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
       userId = decoded.userId;
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { message: 'Unauthorized: Invalid token' },
         { status: 401 }
@@ -262,8 +265,8 @@ export async function POST(request: NextRequest) {
       taxPeriodAssigned: !!taxPeriod,
     });
 
-  } catch (error) {
-    console.error('Purchase recording error:', error);
+  } catch (err) {
+    console.error('Purchase recording error:', err);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

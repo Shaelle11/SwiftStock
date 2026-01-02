@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect, useContext } from 'react';
-import { useAuth, AuthContext } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/utils/api';
-import { getStoreBrandStyles } from '@/lib/store-branding';
+// import { getStoreBrandStyles } from '@/lib/store-branding'; // Unused
 import ProductTable from '@/components/features/inventory/ProductTable';
 import Link from 'next/link';
 import type { Product, PaginatedResponse } from '@/lib/types';
 
 export default function InventoryPage() {
   const { user } = useAuth();
-  const { store } = useContext(AuthContext)!;
-  const brandStyles = getStoreBrandStyles(store);
+  // const { store } = useContext(AuthContext)!; // Unused
+  // const brandStyles = getStoreBrandStyles(store); // Unused
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);

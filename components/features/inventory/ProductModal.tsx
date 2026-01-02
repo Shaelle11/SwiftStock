@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+// import { useAuth } from '@/contexts/AuthContext'; // Unused
 import { api } from '@/lib/utils/api';
 import { getStoreBrandStyles } from '@/lib/store-branding';
-import type { Product } from '@/lib/types';
+import type { Product, Store } from '@/lib/types';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface ProductModalProps {
   product?: Product | null;
   onSave: () => void;
   storeId?: string;
-  store?: any;
+  store?: Store;
 }
 
 interface ProductFormData {
@@ -23,7 +23,7 @@ interface ProductFormData {
   costPrice: string;
   stockQuantity: string;
   lowStockThreshold: string;
-  sku: string;
+  barcode: string;
   imageUrl: string;
 }
 
@@ -35,7 +35,7 @@ const initialFormData: ProductFormData = {
   costPrice: '',
   stockQuantity: '',
   lowStockThreshold: '',
-  sku: '',
+  barcode: '',
   imageUrl: ''
 };
 
@@ -47,7 +47,6 @@ export default function ProductModal({
   storeId, 
   store 
 }: ProductModalProps) {
-  const { token } = useAuth();
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<ProductFormData>>({});
@@ -63,7 +62,16 @@ export default function ProductModal({
     'Other'
   ]);
 
-  const brandStyles = getStoreBrandStyles(store);
+  const brandStyles = getStoreBrandStyles(store ? {
+    id: store.id,
+    name: store.name,
+    description: store.description,
+    address: store.address || '',
+    phone: store.phone || '',
+    email: store.email || '',
+    logoUrl: store.logo,
+    primaryColor: store.theme?.primaryColor || '#3B82F6'
+  } : null);
 
   useEffect(() => {
     if (product) {
@@ -75,7 +83,7 @@ export default function ProductModal({
         costPrice: product.costPrice.toString(),
         stockQuantity: product.stockQuantity.toString(),
         lowStockThreshold: product.lowStockThreshold.toString(),
-        sku: product.sku || '',
+        barcode: product.barcode || '',
         imageUrl: product.imageUrl || ''
       });
     } else {
@@ -153,7 +161,7 @@ export default function ProductModal({
         costPrice: parseFloat(formData.costPrice),
         stockQuantity: parseInt(formData.stockQuantity),
         lowStockThreshold: parseInt(formData.lowStockThreshold),
-        sku: formData.sku || generateSKU(),
+        barcode: formData.barcode || generateSKU(),
         imageUrl: formData.imageUrl || null,
         storeId: storeId
       };
@@ -161,14 +169,10 @@ export default function ProductModal({
       let response;
       if (product) {
         // Update existing product
-        response = await api.put(`/api/products/${product.id}`, productData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        response = await api.put(`/api/products/${product.id}`, productData);
       } else {
         // Create new product
-        response = await api.post('/api/products', productData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        response = await api.post('/api/products', productData);
       }
 
       if (response.success) {
@@ -265,8 +269,8 @@ export default function ProductModal({
               </label>
               <input
                 type="text"
-                name="sku"
-                value={formData.sku}
+                name="barcode"
+                value={formData.barcode}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Auto-generated if empty"

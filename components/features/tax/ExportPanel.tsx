@@ -3,10 +3,9 @@ interface ExportPanelProps {
   period: string;
   dateRange: { start: string; end: string };
   token: string | null;
-  brandStyles: any;
 }
 
-export default function ExportPanel({ businessId, period, dateRange, token, brandStyles }: ExportPanelProps) {
+export default function ExportPanel({ period }: Pick<ExportPanelProps, 'period'>) {
   const handleExportVATReportCSV = async () => {
     try {
       // Future implementation: Call export API

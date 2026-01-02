@@ -187,7 +187,7 @@ export default function ProductTable({ products, onEdit, onDelete, onView, onAdj
                   </div>
                 </td>
                 <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{product.sku || 'N/A'}</div>
+                  <div className="text-sm text-gray-900">{product.barcode || 'N/A'}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{product.category}</div>

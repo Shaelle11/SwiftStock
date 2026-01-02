@@ -90,17 +90,15 @@ export default function BusinessOrders() {
       if (dateRangeFilter !== 'all') params.dateRange = dateRangeFilter;
       if (sortBy) params.sort = sortBy;
 
-      const response = await api.get('/api/sales', params, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/api/sales', params);
       
       if (response.success && response.data) {
-        const ordersList = Array.isArray(response.data) ? response.data : response.data.items || [];
+        const ordersList = Array.isArray(response.data) ? response.data : (response.data as any)?.items || [];
         setOrders(ordersList);
         setStats(calculateStats(ordersList));
-        
-        if (response.data.pagination) {
-          setTotalPages(response.data.pagination.pages);
+
+        if ((response.data as any)?.pagination) {
+          setTotalPages((response.data as any).pagination.pages);
         }
       } else {
         setError(response.message || 'Failed to load orders');

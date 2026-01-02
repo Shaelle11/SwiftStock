@@ -92,9 +92,7 @@ export default function BusinessPOS() {
       if (search) params.search = search;
       if (category) params.category = category;
 
-      const response = await api.get<PaginatedResponse<Product>>('/api/products', params, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get<PaginatedResponse<Product>>('/api/products', params);
       
       if (response.success && response.data) {
         setProducts(response.data.items);
@@ -249,14 +247,12 @@ export default function BusinessPOS() {
         storeId: businessId
       };
 
-      const response = await api.post('/api/sales', saleData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.post('/api/sales', saleData);
       
       if (response.success) {
         // Create sale data for receipt
         const completedSale: SaleData = {
-          id: response.data.id || Date.now().toString(),
+          id: (response.data as any)?.id || Date.now().toString(),
           total,
           items: [...cart],
           customerName: customerName || 'Guest',

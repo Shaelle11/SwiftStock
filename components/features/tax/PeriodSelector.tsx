@@ -3,15 +3,13 @@ interface PeriodSelectorProps {
   onPeriodChange: (period: string) => void;
   customDateRange: { start: string; end: string };
   onCustomDateChange: (range: { start: string; end: string }) => void;
-  brandStyles: any;
 }
 
 export default function PeriodSelector({ 
   selectedPeriod, 
   onPeriodChange, 
   customDateRange, 
-  onCustomDateChange, 
-  brandStyles 
+  onCustomDateChange
 }: PeriodSelectorProps) {
   const periods = [
     { value: 'this-month', label: 'This Month' },

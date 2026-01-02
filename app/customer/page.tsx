@@ -25,7 +25,7 @@ interface Store {
 }
 
 export default function CustomerDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ export default function CustomerDashboard() {
       } else {
         setError('Failed to load stores');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to connect to server');
     } finally {
       setLoading(false);

@@ -114,12 +114,12 @@ export default function CreateBusinessPage() {
     'Review & Create'
   ];
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
       
       // Auto-generate slug from business name
-      if (field === 'name' && value) {
+      if (field === 'name' && typeof value === 'string' && value) {
         updated.slug = value.toLowerCase()
           .replace(/[^a-z0-9\s-]/g, '')
           .replace(/\s+/g, '-')
@@ -223,7 +223,7 @@ export default function CreateBusinessPage() {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Create Your Business</h2>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Set up inventory, sales, and your online store in a few simple steps. 
-              We'll guide you through everything you need to get started.
+                We&apos;ll guide you through everything you need to get started.
             </p>
             <button
               onClick={nextStep}
@@ -451,7 +451,7 @@ export default function CreateBusinessPage() {
                     onChange={() => handleChange('trackQuantities', false)}
                     className="mr-3"
                   />
-                  <span className="text-gray-900">No - Don't track quantities</span>
+                  <span className="text-gray-900">No - Don&apos;t track quantities</span>
                 </label>
               </div>
             </div>
@@ -608,7 +608,7 @@ export default function CreateBusinessPage() {
                     onChange={() => handleChange('chargeVat', false)}
                     className="mr-3"
                   />
-                  <span className="text-gray-900">No - I don't charge VAT</span>
+                  <span className="text-gray-700">No, I don&apos;t charge VAT</span>
                 </label>
               </div>
             </div>

@@ -16,6 +16,7 @@ interface CurrentBusiness {
 interface UserBusiness {
   id: string;
   name: string;
+  slug: string;
 }
 
 interface BusinessLayoutProps {

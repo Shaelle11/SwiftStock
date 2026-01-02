@@ -140,8 +140,8 @@ export default function TaxCompliancePage({ params }: { params: Promise<{ busine
         setBusinessInfo({
           name: store.name || 'Your Business',
           address: store.address,
-          tin: store.tin,
-          cacNumber: store.cacNumber,
+          tin: (store as any).tin || '',
+          cacNumber: (store as any).cacNumber || '',
           phone: store.phone,
           email: store.email
         });
@@ -176,7 +176,7 @@ export default function TaxCompliancePage({ params }: { params: Promise<{ busine
     }
   };
 
-  const getComplianceStatus = () => {
+  const getComplianceStatus = (): { status: 'ready' | 'warning' | 'error' | 'loading'; message: string; issues?: number } => {
     if (!taxSummary) return { status: 'loading', message: 'Loading compliance status...' };
     
     const criticalIssues = complianceIssues.filter(issue => issue.type === 'error');
@@ -184,7 +184,7 @@ export default function TaxCompliancePage({ params }: { params: Promise<{ busine
     
     if (criticalIssues.length > 0) {
       return {
-        status: 'error',
+        status: 'error' as const,
         message: 'Incomplete records - action required',
         issues: criticalIssues.length
       };
@@ -192,14 +192,14 @@ export default function TaxCompliancePage({ params }: { params: Promise<{ busine
     
     if (warnings.length > 0) {
       return {
-        status: 'warning',
+        status: 'warning' as const,
         message: 'Missing tax details - review recommended',
         issues: warnings.length
       };
     }
     
     return {
-      status: 'ready',
+      status: 'ready' as const,
       message: 'All sales for this period are properly recorded',
       issues: 0
     };
@@ -243,15 +243,10 @@ export default function TaxCompliancePage({ params }: { params: Promise<{ busine
             onPeriodChange={setSelectedPeriod}
             customDateRange={customDateRange}
             onCustomDateChange={setCustomDateRange}
-            brandStyles={brandStyles}
           />
           
           <ExportPanel
-            businessId={resolvedParams.businessId}
             period={selectedPeriod}
-            dateRange={customDateRange}
-            token={token}
-            brandStyles={brandStyles}
           />
         </div>
       </div>
@@ -274,7 +269,6 @@ export default function TaxCompliancePage({ params }: { params: Promise<{ busine
       {complianceIssues.length > 0 && (
         <ComplianceFlags
           issues={complianceIssues}
-          brandStyles={brandStyles}
         />
       )}
 

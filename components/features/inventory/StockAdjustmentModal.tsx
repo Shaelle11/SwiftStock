@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+// import { useAuth } from '@/contexts/AuthContext'; // Unused
 import { api } from '@/lib/utils/api';
 import { getStoreBrandStyles } from '@/lib/store-branding';
-import type { Product } from '@/lib/types';
+import type { Product, Store } from '@/lib/types';
 
 interface StockAdjustmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
   onSave: () => void;
-  store?: any;
+  store?: Store;
 }
 
 interface AdjustmentFormData {
@@ -56,12 +56,21 @@ export default function StockAdjustmentModal({
   onSave,
   store 
 }: StockAdjustmentModalProps) {
-  const { token } = useAuth();
+  // const { token } = useAuth(); // Unused
   const [formData, setFormData] = useState<AdjustmentFormData>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<AdjustmentFormData>>({});
 
-  const brandStyles = getStoreBrandStyles(store);
+  const brandStyles = getStoreBrandStyles(store ? {
+    id: store.id,
+    name: store.name,
+    description: store.description,
+    address: store.address || '',
+    phone: store.phone || '',
+    email: store.email || '',
+    logoUrl: store.logo,
+    primaryColor: store.theme?.primaryColor || '#3B82F6'
+  } : null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -137,9 +146,7 @@ export default function StockAdjustmentModal({
         newQuantity: calculateNewStock()
       };
 
-      const response = await api.post('/api/products/adjust-stock', adjustmentData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.post('/api/products/adjust-stock', adjustmentData);
 
       if (response.success) {
         onSave();
@@ -179,7 +186,7 @@ export default function StockAdjustmentModal({
           {/* Product Information */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-medium text-gray-900">{product.name}</h3>
-            <p className="text-sm text-gray-600">SKU: {product.sku || 'N/A'}</p>
+            <p className="text-sm text-gray-600">Barcode: {product.barcode || 'N/A'}</p>
             <p className="text-sm text-gray-600">
               Current Stock: <span className="font-medium">{product.stockQuantity}</span>
             </p>

@@ -80,7 +80,7 @@ export default function NotificationsPage() {
       const response = await api.get('/api/dashboard/stats');
       
       if (response.success && response.data) {
-        setRecentSales(response.data.recentSales || []);
+        setRecentSales((response.data as any)?.recentSales || []);
       }
     } catch (err) {
       console.error('Failed to load recent activities:', err);

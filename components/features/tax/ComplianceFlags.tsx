@@ -11,10 +11,9 @@ interface ComplianceIssue {
 
 interface ComplianceFlagsProps {
   issues: ComplianceIssue[];
-  brandStyles: any;
 }
 
-export default function ComplianceFlags({ issues, brandStyles }: ComplianceFlagsProps) {
+export default function ComplianceFlags({ issues }: ComplianceFlagsProps) {
   if (issues.length === 0) return null;
 
   const getIssueIcon = (type: string) => {

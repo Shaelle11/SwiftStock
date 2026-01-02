@@ -137,18 +137,45 @@ export async function POST(request: NextRequest) {
           storeId: user.storeId!,
           cashierId: user.id,
           customerId: customerId || null,
+          invoiceNumber: `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           subtotal: discountedSubtotal,
           tax,
           discount: discountAmount,
           total,
           paymentMethod: paymentMethod.toUpperCase() as 'CASH' | 'CARD' | 'TRANSFER' | 'OTHER',
           notes,
-          // Tax-specific fields
-          vatRate: 0.15, // 15% VAT rate
+          // Tax-specific fields - vatRate handled separately
           vatAmount: tax,
-          taxableAmount: discountedSubtotal,
+          grossAmount: total,
+          netAmount: discountedSubtotal,
           items: {
-            create: saleItems
+            create: saleItems.map(item => ({
+              productId: item.productId,
+              productName: item.productName,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              subtotal: item.subtotal,
+              taxCategory: 'VATABLE' as const,
+              vatRate: 7.5,
+              vatAmount: (item.subtotal * 7.5) / 107.5,
+              totalAmount: item.subtotal,
+              product: {
+                connect: { id: item.productId }
+              }
+            })).map(item => ({
+              productId: item.productId,
+              productName: item.productName,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              subtotal: item.subtotal,
+              taxCategory: 'VATABLE' as const,
+              vatRate: 7.5,
+              vatAmount: (item.subtotal * 7.5) / 107.5,
+              totalAmount: item.subtotal,
+              product: {
+                connect: { id: item.productId }
+              }
+            }))
           }
         },
         include: {

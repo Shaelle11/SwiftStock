@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
@@ -27,17 +27,7 @@ export default function AppPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user || !token) {
-      router.push('/auth/login');
-      return;
-    }
-    
-    // Load user's businesses if they have any
-    fetchUserBusinesses();
-  }, [user, token, router]);
-
-  const fetchUserBusinesses = async () => {
+  const fetchUserBusinesses = useCallback(async () => {
     try {
       const response = await fetch('/api/stores?owner=true', {
         headers: {
@@ -49,12 +39,22 @@ export default function AppPage() {
         const data = await response.json();
         setBusinesses(data.stores || []);
       }
-    } catch (error) {
-      console.error('Failed to load businesses:', error);
+    } catch (_error) {
+      console.error('Failed to load businesses:', _error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!user || !token) {
+      router.push('/auth/login');
+      return;
+    }
+    
+    // Load user's businesses if they have any
+    fetchUserBusinesses();
+  }, [user, token, router, fetchUserBusinesses]);
 
   if (!user) {
     return null; // Will redirect in useEffect
@@ -111,7 +111,7 @@ export default function AppPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                       </svg>
                     </div>
-                    <p className="text-gray-500 mb-4 text-sm">You haven't placed any orders yet. Explore stores to get started.</p>
+                    <p className="text-gray-500 mb-4 text-sm">You haven&apos;t placed any orders yet. Explore stores to get started.</p>
                     <Link 
                       href="/explore"
                       className="inline-flex items-center text-teal-700 hover:text-teal-800 font-medium text-sm"

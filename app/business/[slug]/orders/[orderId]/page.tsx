@@ -60,12 +60,10 @@ export default function OrderDetailsPage() {
     setError(null);
 
     try {
-      const response = await api.get(`/api/sales/${orderId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get(`/api/sales/${orderId}`);
       
       if (response.success && response.data) {
-        setOrder(response.data);
+        setOrder(response.data as any);
       } else {
         setError(response.message || 'Failed to load order details');
       }

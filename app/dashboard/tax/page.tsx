@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { formatNaira, formatTaxDate, formatTaxPeriod, generateMonthlyTaxPeriod } from '@/lib/tax/utils';
@@ -43,19 +43,7 @@ export default function TaxDashboard() {
   const [newPeriodYear, setNewPeriodYear] = useState(new Date().getFullYear());
   const [newPeriodMonth, setNewPeriodMonth] = useState(new Date().getMonth() + 1);
 
-  useEffect(() => {
-    if (user && token) {
-      fetchStores();
-    }
-  }, [user, token]);
-
-  useEffect(() => {
-    if (selectedStore) {
-      fetchTaxPeriods();
-    }
-  }, [selectedStore]);
-
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     try {
       const response = await fetch('/api/stores?owner=true', {
         headers: {
@@ -71,14 +59,14 @@ export default function TaxDashboard() {
           setSelectedStore(data.stores[0]);
         }
       }
-    } catch (error) {
-      console.error('Error fetching stores:', error);
+    } catch (_error) {
+      console.error('Error fetching stores:', _error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const fetchTaxPeriods = async () => {
+  const fetchTaxPeriods = useCallback(async () => {
     if (!selectedStore) return;
     
     try {
@@ -93,10 +81,22 @@ export default function TaxDashboard() {
         const data = await response.json();
         setTaxPeriods(data.periods || []);
       }
-    } catch (error) {
-      console.error('Error fetching tax periods:', error);
+    } catch (_error) {
+      console.error('Error fetching tax periods:', _error);
     }
-  };
+  }, [selectedStore, token]);
+
+  useEffect(() => {
+    if (user && token) {
+      fetchStores();
+    }
+  }, [user, token, fetchStores]);
+
+  useEffect(() => {
+    if (selectedStore) {
+      fetchTaxPeriods();
+    }
+  }, [selectedStore, fetchTaxPeriods]);
 
   const createTaxPeriod = async () => {
     if (!selectedStore) return;
@@ -127,7 +127,7 @@ export default function TaxDashboard() {
         const errorData = await response.json();
         setMessage(errorData.message || 'Failed to create tax period');
       }
-    } catch (error) {
+    } catch {
       setMessage('An error occurred while creating tax period');
     } finally {
       setCreating(false);
@@ -155,7 +155,7 @@ export default function TaxDashboard() {
         const errorData = await response.json();
         setMessage(errorData.message || 'Failed to close tax period');
       }
-    } catch (error) {
+    } catch {
       setMessage('An error occurred while closing tax period');
     }
   };
