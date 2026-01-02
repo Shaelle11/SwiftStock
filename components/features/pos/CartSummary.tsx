@@ -182,16 +182,6 @@ export default function CartSummary({
           `Complete Sale • ${formatCurrency(total)}`
         )}
       </button>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">{formatCurrency(item.product.sellingPrice)} each</p>
-                    <p className="font-medium text-gray-900">{formatCurrency(item.subtotal)}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Cart Totals */}
       <div className="border-t border-gray-200 pt-4">

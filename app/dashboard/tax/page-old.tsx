@@ -159,6 +159,8 @@ export default function TaxDashboard() {
       setMessage('An error occurred while closing tax period');
     }
   };
+
+  const [stats, setStats] = useState<{
     totalSales: number;
     totalVatCollected: number;
     totalRevenue: number;

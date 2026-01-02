@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 // GET - Generate VAT report for a tax period
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -29,7 +29,8 @@ export async function GET(
       );
     }
 
-    const periodId = params.id;
+    const resolvedParams = await params;
+    const periodId = resolvedParams.id;
 
     // Get tax period with all data needed for VAT report
     const taxPeriod = await prisma.taxPeriod.findFirst({

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 // POST - Close tax period (finalize calculations)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -29,7 +29,8 @@ export async function POST(
       );
     }
 
-    const periodId = params.id;
+    const resolvedParams = await params;
+    const periodId = resolvedParams.id;
 
     // Get tax period and verify ownership
     const taxPeriod = await prisma.taxPeriod.findFirst({
@@ -164,7 +165,7 @@ export async function POST(
 // GET - Get specific tax period details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -188,7 +189,8 @@ export async function GET(
       );
     }
 
-    const periodId = params.id;
+    const resolvedParams = await params;
+    const periodId = resolvedParams.id;
 
     // Get tax period with all related data
     const taxPeriod = await prisma.taxPeriod.findFirst({
