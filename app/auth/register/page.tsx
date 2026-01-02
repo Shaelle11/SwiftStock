@@ -72,16 +72,16 @@ export default function RegisterPage() {
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-teal-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Join SwiftStock</h2>
-            <p className="text-gray-600">Create your account to start shopping or selling</p>
+            <h2 className="page-title mb-2">Join SwiftStock</h2>
+            <p className="text-gray-600 text-sm">Create your account to start shopping or selling</p>
           </div>
 
-          <div className="bg-white p-8 rounded-xl shadow-lg">
+          <div className="card">
             <form className="space-y-4" onSubmit={handleSubmit}>
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
@@ -101,7 +101,7 @@ export default function RegisterPage() {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-600"
+                    className="input"
                     placeholder="John"
                   />
                 </div>
@@ -116,7 +116,7 @@ export default function RegisterPage() {
                     required
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-600"
+                    className="input"
                     placeholder="Doe"
                   />
                 </div>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-600"
+                  className="input"
                   placeholder="john@example.com"
                 />
               </div>
@@ -149,7 +149,7 @@ export default function RegisterPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-600"
+                  className="input"
                   placeholder="+234 800 000 0000"
                 />
               </div>
@@ -164,7 +164,7 @@ export default function RegisterPage() {
                   rows={2}
                   value={formData.address}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-black placeholder-gray-600"
+                  className="input resize-none"
                   placeholder="Your address"
                 />
               </div>
@@ -181,7 +181,7 @@ export default function RegisterPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-600"
+                  className="input"
                   placeholder="Minimum 6 characters"
                 />
               </div>
@@ -197,7 +197,7 @@ export default function RegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder-gray-600"
+                  className="input"
                   placeholder="Re-enter your password"
                 />
               </div>
@@ -208,15 +208,15 @@ export default function RegisterPage() {
                   name="terms"
                   type="checkbox"
                   required
-                  className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 mt-0.5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                   I agree to the{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
+                  <a href="#" className="text-teal-600 hover:text-teal-500 font-medium">
                     Terms of Service
                   </a>{' '}
                   and{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-500 font-medium">
+                  <a href="#" className="text-teal-600 hover:text-teal-500 font-medium">
                     Privacy Policy
                   </a>
                 </label>
@@ -225,7 +225,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 px-4 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="btn btn-primary w-full"
               >
                 {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
@@ -236,7 +236,7 @@ export default function RegisterPage() {
                 Already have an account?{' '}
                 <Link
                   href="/auth/login"
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  className="font-medium text-teal-600 hover:text-teal-500"
                 >
                   Sign in here
                 </Link>

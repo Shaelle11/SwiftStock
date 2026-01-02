@@ -99,28 +99,44 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Point of Sale</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="page-title text-teal-800">Product Selection</h1>
+            <p className="text-gray-600 text-sm">Choose products to add to the cart</p>
+          </div>
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+            </svg>
+            <span>{products.length} products available</span>
+          </div>
+        </div>
         
         {/* Search and Filters */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
             <input
               type="text"
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 placeholder-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input pl-10"
             />
           </div>
           <div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input"
             >
-              <option value="">All Categories</option>
+              <option value="" className="text-gray-600">All Categories</option>
               {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
+                <option key={category} value={category} className="text-gray-900">{category}</option>
               ))}
             </select>
           </div>
@@ -138,18 +154,22 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500">Loading products...</div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
+              <div className="text-gray-500">Loading products...</div>
+            </div>
           </div>
         ) : products.length === 0 ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center text-gray-500">
-              <p>No products found</p>
-              {searchQuery || selectedCategory ? (
-                <p className="text-sm mt-1">Try adjusting your search or filters</p>
-              ) : (
-                <p className="text-sm mt-1">Add some products to get started</p>
-              )}
-            </div>
+          <div className="empty-state">
+            <svg className="w-12 h-12 text-teal-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+            </svg>
+            <p className="text-gray-600 mb-2">No products found</p>
+            {searchQuery || selectedCategory ? (
+              <p className="text-sm text-gray-500">Try adjusting your search or filters</p>
+            ) : (
+              <p className="text-sm text-gray-500">Add some products to get started</p>
+            )}
           </div>
         ) : (
           <>
@@ -159,9 +179,9 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
                 const canAddToCart = canSell(product, 1);
 
                 return (
-                  <div key={product.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={product.id} className="card hover:shadow-md transition-shadow">
                     {/* Product Image */}
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                    <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center">
                       {product.imageUrl ? (
                         <Image
                           src={product.imageUrl}
@@ -171,7 +191,7 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
                           height={64}
                         />
                       ) : (
-                        <div className="text-gray-400 text-4xl">📦</div>
+                        <div className="text-teal-400 text-4xl">📦</div>
                       )}
                     </div>
 
@@ -182,7 +202,7 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
                       </h3>
                       
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-lg text-gray-900">
+                        <span className="font-semibold text-lg text-gray-900">
                           {formatCurrency(product.sellingPrice)}
                         </span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${stockStatus.bg} ${stockStatus.color}`}>
@@ -199,7 +219,7 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
                         disabled={!canAddToCart}
                         className={`w-full py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                           canAddToCart
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            ? 'btn btn-primary'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                       >
@@ -217,19 +237,19 @@ export default function ProductPicker({ onAddToCart }: ProductPickerProps) {
                 <button
                   onClick={() => loadProducts(currentPage - 1, searchQuery, selectedCategory)}
                   disabled={currentPage <= 1}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-secondary text-sm px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
                 
-                <span className="px-3 py-2 text-sm text-gray-700">
+                <span className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg">
                   Page {currentPage} of {totalPages}
                 </span>
                 
                 <button
                   onClick={() => loadProducts(currentPage + 1, searchQuery, selectedCategory)}
                   disabled={currentPage >= totalPages}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-secondary text-sm px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>

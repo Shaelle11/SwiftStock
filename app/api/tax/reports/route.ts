@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { verifyAuth } from '@/lib/auth';
 import { 
   getTaxRecords, 
   generateTaxCSV, 
@@ -11,6 +12,23 @@ import {
 
 export async function GET(request: NextRequest) {
   try {
+    const { user, error } = await verifyAuth(request);
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Only business owners and employees can access tax reports
+    if (!['business_owner', 'employee'].includes(user.userType)) {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const storeId = searchParams.get('storeId');
@@ -21,6 +39,14 @@ export async function GET(request: NextRequest) {
 
     if (!storeId) {
       return NextResponse.json({ error: 'Store ID is required' }, { status: 400 });
+    }
+
+    // Verify user has access to this store
+    if (user.storeId && user.storeId !== storeId) {
+      return NextResponse.json(
+        { success: false, message: 'Access denied to this store' },
+        { status: 403 }
+      );
     }
 
     switch (action) {
@@ -89,6 +115,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { user, error } = await verifyAuth(request);
+    
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: error || 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Only business owners and employees can modify tax settings
+    if (!['business_owner', 'employee'].includes(user.userType)) {
+      return NextResponse.json(
+        { success: false, message: 'Insufficient permissions' },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     const body = await request.json();
@@ -103,6 +146,14 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Verify user has access to this store
+        if (user.storeId && user.storeId !== storeId) {
+          return NextResponse.json(
+            { success: false, message: 'Access denied to this store' },
+            { status: 403 }
+          );
+        }
+
         const summary = await generateMonthlySummary(storeId, year, month);
         return NextResponse.json(summary);
 
@@ -110,6 +161,14 @@ export async function POST(request: NextRequest) {
         const { storeId: settingsStoreId, ...settings } = body;
         if (!settingsStoreId) {
           return NextResponse.json({ error: 'Store ID is required' }, { status: 400 });
+        }
+
+        // Verify user has access to this store
+        if (user.storeId && user.storeId !== settingsStoreId) {
+          return NextResponse.json(
+            { success: false, message: 'Access denied to this store' },
+            { status: 403 }
+          );
         }
 
         const updatedSettings = await prisma.storeSettings.upsert({

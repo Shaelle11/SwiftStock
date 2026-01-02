@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -48,6 +48,14 @@ model Store {
   isPublic    Boolean @default(false) // Whether store is visible to customers
   ownerId     String  @unique
   
+  // Tax Identity (Business Information)
+  cacNumber     String? // Corporate Affairs Commission Registration Number
+  tin           String? // Tax Identification Number
+  vatRegistered Boolean @default(false) // Whether business is VAT registered
+  currency      String  @default("NGN") // Default to Nigerian Naira
+  state         String? // For tax jurisdiction
+  country       String  @default("Nigeria")
+  
   // Branding
   logoUrl       String?
   primaryColor  String @default("#000000")
@@ -56,6 +64,7 @@ model Store {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deployedAt DateTime? // When store was last deployed
   
   // Relations
   owner        User         @relation("StoreOwner", fields: [ownerId], references: [id])
@@ -67,6 +76,12 @@ model Store {
   settings     StoreSettings?
   taxRecords   TaxRecord[]
   taxSummaries TaxSummary[]
+  storeProducts StoreProduct[] // Deployed products
+  
+  // Tax-related relations
+  taxPeriods   TaxPeriod[] // Tax reporting periods
+  purchases    Purchase[]  // Input VAT tracking
+  auditLogs    AuditLog[]  // Compliance audit trail
   
   @@map("stores")
 }
@@ -85,6 +100,10 @@ model Product {
   isActive          Boolean @default(true)
   storeId           String
   
+  // Tax Classification
+  taxCategory       String  @default("VATABLE") // "VATABLE" | "VAT_EXEMPT" | "ZERO_RATED"
+  vatRate           Float   @default(7.5) // Nigeria standard VAT rate 7.5%
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -93,6 +112,7 @@ model Product {
   saleItems SaleItem[]
   cartItems CartItem[]
   orderItems OrderItem[]
+  storeProducts StoreProduct[] // Store deployment tracking
   
   @@map("products")
 }
@@ -102,25 +122,30 @@ model Sale {
   storeId       String
   cashierId     String
   customerId    String?
+  invoiceNumber String        @unique // Important for tax compliance
   subtotal      Float
   tax           Float
   discount      Float         @default(0)
   total         Float
-  paymentMethod String
+  
+  // VAT Calculation Fields
+  grossAmount   Float // Total including VAT
+  vatAmount     Float // Total VAT collected (Output VAT)
+  netAmount     Float // Amount before VAT
+  
+  paymentMethod String        @default("POS") // "POS" | "Transfer" | "Cash" etc
+  taxPeriodId   String? // Link to tax period for reporting
   notes         String?
   
-  // Tax-specific fields (immutable at sale time)
-  vatRate       Float         @default(0) // VAT rate used (e.g., 0.075 for 7.5%)
-  vatAmount     Float         @default(0) // Exact VAT collected
-  taxableAmount Float         // Amount before VAT
-  
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   
   // Relations
-  store      Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  cashier    User        @relation("SalesCashier", fields: [cashierId], references: [id])
-  items      SaleItem[]
-  taxRecord  TaxRecord?  @relation("SaleTaxRecord")
+  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  cashier   User        @relation("SalesCashier", fields: [cashierId], references: [id])
+  items     SaleItem[]
+  taxPeriod TaxPeriod?  @relation(fields: [taxPeriodId], references: [id])
+  taxRecord TaxRecord?  @relation("SaleTaxRecord")
   
   @@map("sales")
 }
@@ -130,9 +155,15 @@ model SaleItem {
   saleId      String
   productId   String
   productName String // Store name at time of sale
-  unitPrice   Float  // Price at time of sale
   quantity    Int
-  subtotal    Float
+  unitPrice   Float  // Price at time of sale
+  subtotal    Float  // Line total before VAT
+  
+  // Tax Classification (copied from product at time of sale for audit trail)
+  taxCategory String // "VATABLE" | "VAT_EXEMPT" | "ZERO_RATED"
+  vatRate     Float  // VAT rate at time of sale
+  vatAmount   Float  // VAT for this line item
+  totalAmount Float  // Total for this line item including VAT
   
   // Relations
   sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
@@ -340,4 +371,100 @@ model TaxSummary {
   
   @@unique([storeId, period])
   @@map("tax_summaries")
+}
+
+// Store-Product relationship for deployment tracking
+model StoreProduct {
+  id          String  @id @default(cuid())
+  storeId     String
+  productId   String
+  isDeployed  Boolean @default(true) // Whether this product is currently deployed
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([storeId, productId])
+  @@map("store_products")
+}
+
+// Tax Period Management - Critical for compliance
+model TaxPeriod {
+  id        String   @id @default(cuid())
+  storeId   String
+  startDate DateTime // Period start (e.g., 2026-01-01)
+  endDate   DateTime // Period end (e.g., 2026-01-31)
+  status    String   @default("OPEN") // "OPEN" | "CLOSED"
+  closedAt  DateTime? // When period was closed
+  closedBy  String?  // User who closed the period
+  
+  // Generated fields (calculated when closing period)
+  totalSales      Float? // Total sales for period
+  vatableSales    Float? // VAT applicable sales
+  outputVat       Float? // VAT collected from customers
+  inputVat        Float? // VAT paid on purchases
+  vatPayable      Float? // Net VAT owed (Output - Input)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  sales     Sale[] // Sales in this period
+  purchases Purchase[] // Purchases in this period
+  
+  @@map("tax_periods")
+}
+
+// Purchase Tracking for Input VAT
+model Purchase {
+  id            String   @id @default(cuid())
+  storeId       String
+  supplierName  String   // Supplier/vendor name
+  supplierTin   String?  // Supplier's TIN for compliance
+  invoiceNumber String   // Supplier's invoice number
+  date          DateTime // Purchase date
+  
+  // Purchase amounts
+  grossAmount   Float    // Total including VAT
+  vatAmount     Float    // VAT paid (Input VAT)
+  netAmount     Float    // Amount before VAT
+  
+  description   String?  // What was purchased
+  paymentMethod String   @default("Transfer") // How payment was made
+  taxPeriodId   String?  // Link to tax period
+  
+  // Audit fields
+  recordedBy    String   // User who recorded this purchase
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  taxPeriod TaxPeriod? @relation(fields: [taxPeriodId], references: [id])
+  
+  @@map("purchases")
+}
+
+// Audit Log for Legal Compliance
+model AuditLog {
+  id          String   @id @default(cuid())
+  storeId     String
+  entityType  String   // "Sale", "Product", "TaxPeriod", etc.
+  entityId    String   // ID of the affected record
+  action      String   // "CREATE", "UPDATE", "DELETE", "CLOSE_PERIOD"
+  oldValue    String?  // JSON string of old values
+  newValue    String?  // JSON string of new values
+  performedBy String   // User ID who performed the action
+  timestamp   DateTime @default(now())
+  ipAddress   String?  // For security audit
+  userAgent   String?  // Browser/app info
+  
+  // Relations
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@map("audit_logs")
 }

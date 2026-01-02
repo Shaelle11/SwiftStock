@@ -30,6 +30,7 @@ export default function StorePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [showCartDrawer, setShowCartDrawer] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
@@ -92,6 +93,9 @@ export default function StorePage() {
         return [...prevCart, { product, quantity }];
       }
     });
+    
+    // Auto-open cart drawer when item is added
+    setShowCartDrawer(true);
   };
 
   const removeFromCart = (productId: string) => {
@@ -166,6 +170,7 @@ export default function StorePage() {
 
   const openCheckoutModal = () => {
     if (cart.length === 0) return;
+    setShowCartDrawer(false);
     setShowCheckoutModal(true);
   };
 
@@ -200,6 +205,17 @@ export default function StorePage() {
 
   const { store, products, categories } = storeData;
 
+  // Transform Google Drive URL to direct image URL
+  const getDirectImageUrl = (url: string) => {
+    if (url.includes('drive.google.com/file/d/')) {
+      const fileId = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+      if (fileId) {
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      }
+    }
+    return url;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50" style={{ '--primary-color': store.primaryColor, '--accent-color': store.accentColor } as React.CSSProperties}>
       {/* Header */}
@@ -208,7 +224,13 @@ export default function StorePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {store.logoUrl && (
-                <Image src={store.logoUrl} alt={store.name} width={48} height={48} className="rounded-lg object-cover" />
+                <Image 
+                  src={getDirectImageUrl(store.logoUrl)} 
+                  alt={store.name} 
+                  width={48} 
+                  height={48} 
+                  className="rounded-lg object-cover" 
+                />
               )}
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: store.primaryColor }}>{store.name}</h1>
@@ -218,20 +240,21 @@ export default function StorePage() {
               </div>
             </div>
             
-            {/* Cart Summary */}
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-600">{cart.length} items</p>
-                <p className="font-bold" style={{ color: store.primaryColor }}>₦{cartTotal.toLocaleString()}</p>
-              </div>
-              <button 
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                onClick={openCheckoutModal}
-                disabled={cart.length === 0}
-              >
-                Checkout
-              </button>
-            </div>
+            {/* Cart Icon */}
+            <button 
+              onClick={() => setShowCartDrawer(true)}
+              className="relative bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m2.6 8L6 5H2m1 8h16m-7 4v8m0 0v-8m0 8h4m-4 0h-4" />
+              </svg>
+              <span>Cart</span>
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">
+                  {cart.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -247,17 +270,17 @@ export default function StorePage() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
               />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             >
-              <option value="">All Categories</option>
+              <option value="" className="text-gray-600">All Categories</option>
               {categories.map((category) => (
-                <option key={category} value={category}>
+                <option key={category} value={category} className="text-gray-900">
                   {category}
                 </option>
               ))}
@@ -271,7 +294,7 @@ export default function StorePage() {
             <div key={product.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
               {product.imageUrl && (
                 <Image 
-                  src={product.imageUrl} 
+                  src={getDirectImageUrl(product.imageUrl)} 
                   alt={product.name}
                   width={300}
                   height={192}
@@ -279,7 +302,7 @@ export default function StorePage() {
                 />
               )}
               <div className="p-4">
-                <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                <h3 className="font-semibold text-lg mb-2 text-gray-900">{product.name}</h3>
                 {product.description && (
                   <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
                 )}
@@ -319,30 +342,40 @@ export default function StorePage() {
         )}
       </main>
 
-      {/* Cart Sidebar (if cart has items) */}
-      {cart.length > 0 && (
+      {/* Cart Drawer */}
+      {showCartDrawer && cart.length > 0 && (
         <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-lg border-l z-50 overflow-y-auto">
           <div className="p-6">
-            <h2 className="text-xl font-bold mb-4">Your Cart</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Your Cart</h2>
+              <button 
+                onClick={() => setShowCartDrawer(false)}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             
             <div className="space-y-4 mb-6">
               {cart.map((item) => (
                 <div key={item.product.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                   <div className="flex-1">
-                    <h4 className="font-medium">{item.product.name}</h4>
+                    <h4 className="font-medium text-gray-900">{item.product.name}</h4>
                     <p className="text-sm text-gray-600">₦{item.product.sellingPrice.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button 
                       onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                      className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 font-bold"
                     >
                       -
                     </button>
-                    <span className="w-8 text-center">{item.quantity}</span>
+                    <span className="w-8 text-center text-gray-900 font-medium">{item.quantity}</span>
                     <button 
                       onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                      className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 font-bold"
                       disabled={item.quantity >= item.product.stockQuantity}
                     >
                       +
@@ -350,7 +383,7 @@ export default function StorePage() {
                   </div>
                   <button 
                     onClick={() => removeFromCart(item.product.id)}
-                    className="text-red-600 hover:text-red-800 p-1"
+                    className="text-red-600 hover:text-red-800 p-1 font-bold text-lg"
                   >
                     ×
                   </button>
@@ -358,16 +391,16 @@ export default function StorePage() {
               ))}
             </div>
             
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="font-bold text-lg">Total:</span>
-                <span className="font-bold text-xl" style={{ color: store.primaryColor }}>
+            <div className="border-t-2 pt-6 bg-gray-50 -mx-6 px-6 mt-6">
+              <div className="flex justify-between items-center mb-6">
+                <span className="font-bold text-xl text-gray-900">Total:</span>
+                <span className="font-bold text-2xl" style={{ color: store.primaryColor }}>
                   ₦{cartTotal.toLocaleString()}
                 </span>
               </div>
               
               <button 
-                className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors hover:opacity-90"
+                className="w-full py-4 px-4 rounded-lg font-bold text-lg text-white transition-colors hover:opacity-90 shadow-lg"
                 style={{ backgroundColor: store.accentColor }}
                 onClick={openCheckoutModal}
               >
@@ -410,7 +443,7 @@ export default function StorePage() {
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold">Checkout</h2>
+                    <h2 className="text-xl font-bold text-gray-900">Checkout</h2>
                     <button
                       onClick={closeCheckoutModal}
                       className="text-gray-500 hover:text-gray-700 p-1"
@@ -421,18 +454,18 @@ export default function StorePage() {
 
                   {/* Order Summary */}
                   <div className="mb-6">
-                    <h3 className="font-semibold mb-3">Order Summary</h3>
+                    <h3 className="font-semibold mb-3 text-gray-900">Order Summary</h3>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {cart.map((item) => (
                         <div key={item.product.id} className="flex justify-between items-center text-sm">
-                          <span>{item.product.name} × {item.quantity}</span>
-                          <span>₦{(item.product.sellingPrice * item.quantity).toLocaleString()}</span>
+                          <span className="text-gray-900">{item.product.name} × {item.quantity}</span>
+                          <span className="text-gray-900">₦{(item.product.sellingPrice * item.quantity).toLocaleString()}</span>
                         </div>
                       ))}
                     </div>
                     <div className="border-t pt-2 mt-2">
                       <div className="flex justify-between items-center font-bold">
-                        <span>Total:</span>
+                        <span className="text-gray-900">Total:</span>
                         <span style={{ color: store.primaryColor }}>₦{cartTotal.toLocaleString()}</span>
                       </div>
                     </div>
@@ -440,7 +473,7 @@ export default function StorePage() {
 
                   {/* Guest Checkout Form */}
                   <div className="space-y-4">
-                    <h3 className="font-semibold">Customer Information</h3>
+                    <h3 className="font-semibold text-gray-900">Customer Information</h3>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <input
@@ -448,7 +481,7 @@ export default function StorePage() {
                         placeholder="First Name *"
                         value={guestForm.firstName}
                         onChange={(e) => setGuestForm({...guestForm, firstName: e.target.value})}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
                         required
                       />
                       <input
@@ -456,7 +489,7 @@ export default function StorePage() {
                         placeholder="Last Name *"
                         value={guestForm.lastName}
                         onChange={(e) => setGuestForm({...guestForm, lastName: e.target.value})}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
                         required
                       />
                     </div>
@@ -466,7 +499,7 @@ export default function StorePage() {
                       placeholder="Email *"
                       value={guestForm.email}
                       onChange={(e) => setGuestForm({...guestForm, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
                       required
                     />
 
@@ -475,7 +508,7 @@ export default function StorePage() {
                       placeholder="Phone Number *"
                       value={guestForm.phone}
                       onChange={(e) => setGuestForm({...guestForm, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
                       required
                     />
 
@@ -483,7 +516,7 @@ export default function StorePage() {
                       placeholder="Address (Optional)"
                       value={guestForm.address}
                       onChange={(e) => setGuestForm({...guestForm, address: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-gray-900 placeholder-gray-500"
                       rows={2}
                     />
 
@@ -494,12 +527,12 @@ export default function StorePage() {
                       <select
                         value={guestForm.paymentMethod}
                         onChange={(e) => setGuestForm({...guestForm, paymentMethod: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       >
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="transfer">Bank Transfer</option>
-                        <option value="other">Other</option>
+                        <option value="cash" className="text-gray-900">Cash</option>
+                        <option value="card" className="text-gray-900">Card</option>
+                        <option value="transfer" className="text-gray-900">Bank Transfer</option>
+                        <option value="other" className="text-gray-900">Other</option>
                       </select>
                     </div>
 

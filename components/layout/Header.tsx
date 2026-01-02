@@ -46,12 +46,12 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
               onClick={handleLogoClick}
               className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-600 to-teal-700 rounded-xl flex items-center justify-center shadow-md">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <div className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">
                 SwiftStock
               </div>
             </button>
@@ -67,7 +67,7 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search stores and products..."
-                    className="w-full px-4 py-2 pl-10 pr-4 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors"
+                    className="w-full px-4 py-2 pl-10 pr-4 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-gray-50 focus:bg-white transition-colors"
                   />
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3">
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,19 +87,19 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
                 <>
                   <Link 
                     href="/explore"
-                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
                   >
                     Explore Stores
                   </Link>
                   <Link 
                     href="/auth/login"
-                    className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="text-gray-700 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Login
                   </Link>
                   <Link 
                     href="/auth/register"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    className="btn btn-primary text-sm font-medium"
                   >
                     Register
                   </Link>
@@ -109,15 +109,29 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
                 <>
                   <Link 
                     href="/explore"
-                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
                   >
                     Explore
                   </Link>
                   <Link 
                     href="/app"
-                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
                   >
                     My Dashboard
+                  </Link>
+                  
+                  {/* Notification Bell */}
+                  <Link 
+                    href="/app/notifications"
+                    className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 2a6 6 0 006 6v3.586l.707.707A1 1 0 0116 14H8a1 1 0 01-.707-1.707L8 11.586V8a6 6 0 016-6zM10 18a2 2 0 104 0" />
+                    </svg>
+                    {/* Notification Badge */}
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      3
+                    </span>
                   </Link>
                   
                   {/* Profile Avatar Dropdown */}
@@ -126,7 +140,7 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
                       onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                       className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                      <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
                         {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
                       <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

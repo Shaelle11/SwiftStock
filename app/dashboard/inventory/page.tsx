@@ -132,26 +132,25 @@ export default function InventoryPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
-        <p className="text-gray-600">Manage your products and stock levels</p>
+        <h1 className="page-title">Inventory Management</h1>
+        <p className="text-gray-600 text-sm">Manage your products and stock levels</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="card">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Products</h2>
+            <h2 className="section-header">Products</h2>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => loadProducts(currentPage, searchQuery, selectedCategory)}
                 disabled={loading}
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="btn btn-secondary"
               >
                 {loading ? 'Refreshing...' : 'Refresh'}
               </button>
               <Link 
                 href="/dashboard/inventory/new"
-                className="text-white px-4 py-2 rounded-lg hover:opacity-90 transition-colors"
-                style={brandStyles.buttonStyle}
+                className="btn btn-primary"
               >
                 Add Product
               </Link>
@@ -167,11 +166,11 @@ export default function InventoryPage() {
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="input flex-1"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="btn btn-secondary"
                 >
                   Search
                 </button>
@@ -181,7 +180,7 @@ export default function InventoryPage() {
             <select
               value={selectedCategory}
               onChange={(e) => handleCategoryChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="input"
             >
               <option value="">All Categories</option>
               {categories.map((category) => (
@@ -221,7 +220,7 @@ export default function InventoryPage() {
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="btn btn-secondary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
@@ -230,10 +229,10 @@ export default function InventoryPage() {
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={`px-3 py-1 border rounded-lg ${
+                        className={`px-3 py-1 border rounded-lg text-sm ${
                           currentPage === page
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'border-gray-300 hover:bg-gray-50'
+                            ? 'bg-teal-600 text-white border-teal-600'
+                            : 'btn btn-secondary'
                         }`}
                       >
                         {page}
@@ -243,7 +242,7 @@ export default function InventoryPage() {
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      className="btn btn-secondary text-sm px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
                     </button>
@@ -252,8 +251,8 @@ export default function InventoryPage() {
               )}
             </>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
+            <div className="empty-state">
+              <p>
                 {searchQuery || selectedCategory 
                   ? 'No products found matching your criteria.' 
                   : 'No products found. Start by adding your first product.'

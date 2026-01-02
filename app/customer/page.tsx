@@ -82,14 +82,14 @@ export default function CustomerDashboard() {
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Welcome Section */}
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-xl mb-8">
+          <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-8 rounded-xl mb-8">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">Welcome back, {user.firstName}!</h1>
-                <p className="text-green-100">Discover amazing products from local businesses</p>
+                <p className="text-teal-100 text-lg">Discover amazing products from local businesses</p>
               </div>
               <div className="hidden md:block">
-                <svg className="w-16 h-16 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-16 h-16 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
@@ -98,43 +98,43 @@ export default function CustomerDashboard() {
 
           {/* Account Quick Actions */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="card">
               <div className="flex items-center">
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-teal-50 p-3 rounded-lg">
+                  <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Your Orders</h3>
+                  <h3 className="section-header">Your Orders</h3>
                   <p className="text-sm text-gray-600">Track your recent purchases</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="card">
               <div className="flex items-center">
-                <div className="bg-green-100 p-3 rounded-lg">
+                <div className="bg-green-50 p-3 rounded-lg">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Favorites</h3>
+                  <h3 className="section-header">Favorites</h3>
                   <p className="text-sm text-gray-600">Your saved items</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="card">
               <div className="flex items-center">
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-amber-50 p-3 rounded-lg">
+                  <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Profile</h3>
+                  <h3 className="section-header">Profile</h3>
                   <p className="text-sm text-gray-600">Manage your account</p>
                 </div>
               </div>
@@ -142,10 +142,10 @@ export default function CustomerDashboard() {
           </div>
 
           {/* Stores Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="card">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Discover Local Stores</h2>
-              <p className="text-gray-600">Browse and shop from amazing local businesses</p>
+              <h2 className="page-title mb-2">Discover Local Stores</h2>
+              <p className="text-gray-600 text-sm">Browse and shop from amazing local businesses</p>
             </div>
 
             {/* Search Bar */}

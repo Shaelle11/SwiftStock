@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useContext } from 'react';
+import Footer from '@/components/layout/Footer';
 
 const navigation = [
   { 
@@ -81,23 +82,13 @@ const navigation = [
   },
 ];
 
-interface StoreData {
-  id: string;
-  name: string;
-  description?: string;
-  address: string;
-  phone: string;
-  email: string;
-  logoUrl?: string;
-  primaryColor: string;
-}
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, token, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { store } = useContext(AuthContext)!;
   const pathname = usePathname();
   const router = useRouter();
@@ -166,10 +157,12 @@ export default function DashboardLayout({
           {!isSidebarCollapsed ? (
             <div className="flex items-center space-x-3">
               {store?.logoUrl ? (
-                <img 
+                <Image 
                   src={store.logoUrl} 
                   alt={store.name}
-                  className="w-8 h-8 rounded-lg object-cover"
+                  width={32}
+                  height={32}
+                  className="rounded-lg object-cover"
                 />
               ) : (
                 <div 
@@ -181,9 +174,9 @@ export default function DashboardLayout({
               )}
               <div>
                 <h1 className="text-sm font-semibold text-gray-900 truncate">
-                  {store?.name || 'SwiftStock'}
+                  {store?.name || 'Loading...'}
                 </h1>
-                <p className="text-xs text-gray-500">Dashboard</p>
+                <p className="text-xs text-gray-500">Business Dashboard</p>
               </div>
             </div>
           ) : (
@@ -326,12 +319,13 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${
+      <div className={`transition-all duration-300 flex flex-col min-h-screen ${
         isSidebarCollapsed ? 'pl-16' : 'pl-64'
       }`}>
         <main className="flex-1">
           {children}
         </main>
+        <Footer variant="simple" />
       </div>
     </div>
   );

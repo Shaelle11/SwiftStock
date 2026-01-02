@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Footer from '@/components/layout/Footer';
 
 const customerNavigation = [
   { 
@@ -194,9 +195,11 @@ export default function CustomerLayout({
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main className="flex-1 p-6">
           {children}
         </main>
+        
+        <Footer variant="simple" />
       </div>
     </div>
   );

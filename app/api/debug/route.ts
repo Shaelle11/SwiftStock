@@ -29,10 +29,34 @@ export async function GET() {
       };
     }
 
+    // Test store model access
+    let storeModelTest = null;
+    try {
+      const { prisma } = await import('@/lib/db/prisma');
+      const storeCount = await prisma.store.count();
+      
+      // Test if StoreProduct model is available
+      const storeProductCount = await prisma.storeProduct.count();
+      
+      storeModelTest = {
+        success: true,
+        message: 'Store models accessible',
+        storeCount,
+        storeProductCount
+      };
+    } catch (modelError) {
+      storeModelTest = {
+        success: false,
+        message: 'Store model access failed',
+        error: modelError instanceof Error ? modelError.message : 'Unknown model error'
+      };
+    }
+
     return NextResponse.json({
       success: true,
       environment: environmentInfo,
-      database: databaseTest
+      database: databaseTest,
+      storeModels: storeModelTest
     });
   } catch (error) {
     return NextResponse.json({

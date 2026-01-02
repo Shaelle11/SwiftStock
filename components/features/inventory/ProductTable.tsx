@@ -10,9 +10,10 @@ interface ProductTableProps {
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onView?: (product: Product) => void;
+  onAdjustStock?: (product: Product) => void;
 }
 
-export default function ProductTable({ products, onEdit, onDelete, onView }: ProductTableProps) {
+export default function ProductTable({ products, onEdit, onDelete, onView, onAdjustStock }: ProductTableProps) {
   const [sortField, setSortField] = useState<keyof Product>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
@@ -79,13 +80,16 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
               onClick={() => handleSort('name')}
             >
               <div className="flex items-center space-x-1">
-                <span>Product</span>
+                <span>Product Name</span>
                 {sortField === 'name' && (
                   <span className="text-gray-400">
                     {sortDirection === 'asc' ? '↑' : '↓'}
                   </span>
                 )}
               </div>
+            </th>
+            <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              SKU
             </th>
             <th
               className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
@@ -143,7 +147,7 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
               </div>
             </th>
             <th className="relative px-3 sm:px-6 py-3">
-              <span className="sr-only">Actions</span>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</span>
             </th>
           </tr>
         </thead>
@@ -181,6 +185,9 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
                       )}
                     </div>
                   </div>
+                </td>
+                <td className="hidden md:table-cell px-3 sm:px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{product.sku || 'N/A'}</div>
                 </td>
                 <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{product.category}</div>
@@ -229,6 +236,17 @@ export default function ProductTable({ products, onEdit, onDelete, onView }: Pro
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
+                    {onAdjustStock && (
+                      <button
+                        onClick={() => onAdjustStock(product)}
+                        className="text-green-600 hover:text-green-900"
+                        title="Adjust Stock"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                         </svg>
                       </button>
                     )}

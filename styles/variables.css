@@ -1,0 +1,41 @@
+/* SwiftStock Design System Variables */
+
+/* Colors */
+:export {
+  primary: #0F766E;
+  background: #F9FAFB;
+  surface: #FFFFFF;
+  border: #E5E7EB;
+  textPrimary: #111827;
+  textSecondary: #6B7280;
+  success: #16A34A;
+  warning: #F59E0B;
+  error: #DC2626;
+  info: #2563EB;
+  activeBg: #EFF6FF;
+  hoverBg: #F9FAFB;
+}
+
+/* Component Tokens */
+.design-tokens {
+  /* Spacing (8px system) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  
+  /* Typography */
+  --font-size-page-title: 24px;
+  --font-size-section-header: 16px;
+  --font-size-body: 14px;
+  --font-size-table: 13px;
+  
+  /* Button */
+  --button-height: 40px;
+  --button-radius: 8px;
+  
+  /* Card */
+  --card-radius: 12px;
+}

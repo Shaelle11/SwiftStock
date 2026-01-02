@@ -63,18 +63,18 @@ export default function StoresPage() {
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Section */}
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-xl mb-8">
+          <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-8 rounded-xl mb-8">
             <div className="text-center">
               <h1 className="text-4xl font-bold mb-4">Explore Local Stores</h1>
-              <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+              <p className="text-xl text-teal-100 max-w-3xl mx-auto">
                 Discover amazing products from local businesses in your area. Support your community while finding exactly what you need.
               </p>
             </div>
           </div>
 
           {/* Search Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Find What You&apos;re Looking For</h2>
+          <div className="card mb-8">
+            <h2 className="section-header mb-4">Find What You&apos;re Looking For</h2>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export default function StoresPage() {
               </div>
               <input
                 type="text"
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                className="input text-lg pl-10"
                 placeholder="Search stores by name, type, or products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -94,7 +94,7 @@ export default function StoresPage() {
           {/* Loading State */}
           {loading && (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
               <p className="mt-4 text-gray-600">Loading stores...</p>
             </div>
           )}

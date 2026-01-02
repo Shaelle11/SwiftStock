@@ -6,7 +6,7 @@ import { AuthContext } from '@/contexts/AuthContext';
 import { generateBrandedCSV, generateBrandedHTML, downloadBrandedFile, getStoreBrandStyles } from '@/lib/store-branding';
 
 export default function SalesPage() {
-  const { user, store } = useContext(AuthContext)!;
+  const { user, store, token } = useContext(AuthContext)!;
   const brandStyles = getStoreBrandStyles(store);
   
   const [stats, setStats] = useState({
@@ -71,11 +71,21 @@ export default function SalesPage() {
   };
 
   const fetchStats = async () => {
+    if (!token) {
+      console.error('No authentication token available');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/dashboard/stats');
+      const response = await fetch('/api/dashboard/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch stats');
       const data = await response.json();
-      setStats(data);
+      setStats(data.data || data);
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
@@ -89,6 +99,8 @@ export default function SalesPage() {
   };
 
   useEffect(() => {
+    if (!token || !user) return;
+    
     fetchStats();
 
     // Auto-refresh every 30 seconds
@@ -107,7 +119,7 @@ export default function SalesPage() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [token, user]);
 
   return (
     <div className="p-6">

@@ -66,7 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const storeData = await response.json();
-        setStore(storeData);
+        // Extract the first store from the stores array
+        if (storeData.stores && storeData.stores.length > 0) {
+          setStore(storeData.stores[0]);
+        } else {
+          setStore(null);
+        }
       } else {
         // User might not have a store yet
         setStore(null);
