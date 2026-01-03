@@ -16,6 +16,7 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Determine if we should show search based on current page
   const shouldShowSearch = showSearch || pathname === '/explore' || pathname?.startsWith('/store');
@@ -237,7 +238,10 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
               
               {/* Mobile Menu Button */}
               <div className="md:hidden">
-                <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <button 
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
@@ -257,7 +261,7 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search stores and products..."
-                  className="w-full px-4 py-2 pl-10 pr-4 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-colors"
+                  className="w-full px-4 py-2 pl-10 pr-4 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-gray-50 focus:bg-white transition-colors"
                 />
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,13 +272,111 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
             </form>
           </div>
         )}
+
+        {/* Mobile Menu */}
+        {showMobileMenu && (
+          <div className="md:hidden border-t border-gray-200 py-4">
+            <div className="space-y-2">
+              {!user ? (
+                <>
+                  {pathname === '/explore' ? (
+                    <Link 
+                      href="/"
+                      className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Home
+                    </Link>
+                  ) : (
+                    <Link 
+                      href="/explore"
+                      className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Explore Stores
+                    </Link>
+                  )}
+                  <Link 
+                    href="/auth/login"
+                    className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    href="/auth/register"
+                    className="block bg-teal-600 text-white hover:bg-teal-700 px-3 py-2 text-sm font-medium rounded-lg transition-colors mx-3 text-center"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Register
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {pathname === '/explore' ? (
+                    <Link 
+                      href="/"
+                      className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Home
+                    </Link>
+                  ) : (
+                    <Link 
+                      href="/explore"
+                      className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Explore
+                    </Link>
+                  )}
+                  <Link 
+                    href="/app"
+                    className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    My Dashboard
+                  </Link>
+                  <Link 
+                    href="/app/notifications"
+                    className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Notifications
+                  </Link>
+                  <Link 
+                    href="/app/settings"
+                    className="block text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Settings
+                  </Link>
+                  <div className="border-t border-gray-200 pt-2 mt-2">
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowMobileMenu(false);
+                      }}
+                      className="block w-full text-left text-red-600 hover:text-red-700 px-3 py-2 text-sm font-medium transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       
-      {/* Click outside to close dropdown */}
-      {showProfileDropdown && (
+      {/* Click outside to close dropdowns */}
+      {(showProfileDropdown || showMobileMenu) && (
         <div 
           className="fixed inset-0 z-40" 
-          onClick={() => setShowProfileDropdown(false)}
+          onClick={() => {
+            setShowProfileDropdown(false);
+            setShowMobileMenu(false);
+          }}
         />
       )}
     </header>
