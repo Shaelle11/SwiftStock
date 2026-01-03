@@ -85,12 +85,21 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
               {!user ? (
                 /* Guest State */
                 <>
-                  <Link 
-                    href="/explore"
-                    className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
-                  >
-                    Explore Stores
-                  </Link>
+                  {pathname === '/explore' ? (
+                    <Link 
+                      href="/"
+                      className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    >
+                      Home
+                    </Link>
+                  ) : (
+                    <Link 
+                      href="/explore"
+                      className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    >
+                      Explore Stores
+                    </Link>
+                  )}
                   <Link 
                     href="/auth/login"
                     className="text-gray-700 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -107,12 +116,21 @@ export default function Header({ showAuth = true, showSearch = false }: HeaderPr
               ) : (
                 /* Logged-in State */
                 <>
-                  <Link 
-                    href="/explore"
-                    className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
-                  >
-                    Explore
-                  </Link>
+                  {pathname === '/explore' ? (
+                    <Link 
+                      href="/"
+                      className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    >
+                      Home
+                    </Link>
+                  ) : (
+                    <Link 
+                      href="/explore"
+                      className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"
+                    >
+                      Explore
+                    </Link>
+                  )}
                   <Link 
                     href="/app"
                     className="text-gray-700 hover:text-teal-600 px-3 py-2 text-sm font-medium transition-colors hidden sm:block"

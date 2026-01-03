@@ -114,30 +114,37 @@ export default function ExplorePage() {
     if (user) return null; // Don't show for logged-in users
 
     return (
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50 p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="fixed bottom-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 max-w-sm">
+        <div className="flex items-start">
           <div className="flex-1">
-            <p className="text-gray-900 font-medium">Create an account to track orders and shop faster next time.</p>
+            <p className="text-sm text-gray-700 mb-3">
+              💡 <strong>Tip:</strong> Create an account to save your favorite stores and track orders!
+            </p>
+            <div className="flex space-x-2">
+              <Link 
+                href="/auth/register"
+                className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+              >
+                Sign up
+              </Link>
+              <Link 
+                href="/auth/login"
+                className="text-teal-600 hover:text-teal-700 px-3 py-1 text-xs font-medium"
+              >
+                Log in
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center space-x-4 ml-6">
-            <Link 
-              href="/auth/login"
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Log in
-            </Link>
-            <Link 
-              href="/auth/register"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Create account
-            </Link>
-            <button className="text-gray-400 hover:text-gray-600 p-1">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          <button 
+            className="text-gray-400 hover:text-gray-600 ml-2"
+            onClick={(e) => {
+              e.currentTarget.closest('.fixed')?.remove();
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
     );
@@ -147,7 +154,7 @@ export default function ExplorePage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
-      <main className="flex-1 pb-20"> {/* Extra bottom padding for auth banner */}
+      <main className="flex-1"> {/* Removed extra bottom padding since banner is now a small card */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
           {/* Page Header */}
