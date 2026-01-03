@@ -95,6 +95,39 @@ export default function BusinessSettings() {
     fetchProducts();
   }, [user, token, slug]);
 
+  const handleUndeployStore = async () => {
+    if (!store?.id) return;
+    
+    if (!confirm(`Are you sure you want to remove your ${store.isPublic ? 'public' : 'private'} store? This will make it inaccessible to customers.`)) {
+      return;
+    }
+    
+    setIsDeploying(true);
+    setDeploymentMessage(null);
+    
+    try {
+      const response = await fetch(`/api/stores/${store.id}/undeploy`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        setDeploymentMessage('Store successfully removed and is no longer accessible.');
+        await fetchStoreData();
+      } else {
+        const errorData = await response.json();
+        setDeploymentMessage(errorData.message || 'Failed to remove store. Please try again.');
+      }
+    } catch (error) {
+      setDeploymentMessage('An error occurred while removing the store. Please try again.');
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   const handleDeployStore = async () => {
     if (!store?.id || selectedProducts.size === 0) {
       setDeploymentMessage('Please select at least one product to deploy.');
@@ -118,8 +151,21 @@ export default function BusinessSettings() {
       });
       
       if (response.ok) {
-        setDeploymentMessage(`Store successfully deployed as ${deploymentType} with ${selectedProducts.size} products!`);
+        const deploymentData = await response.json();
+        const storeUrl = deploymentType === 'public' 
+          ? `/store/${store.slug}` 
+          : `/business/${store.slug}`;
+        
+        setDeploymentMessage(`✅ Store successfully deployed as ${deploymentType}! Visit your store at: ${typeof window !== 'undefined' ? window.location.origin : ''}${storeUrl}`);
         await fetchStoreData();
+        
+        // Auto-scroll to show the store status and link
+        setTimeout(() => {
+          document.querySelector('[class*="bg-gray-50"]')?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 500);
       } else {
         const errorData = await response.json();
         setDeploymentMessage(errorData.message || 'Failed to deploy store. Please try again.');
@@ -433,6 +479,36 @@ export default function BusinessSettings() {
                 <p className="text-xs text-gray-600">
                   Store is {store.isPublic ? 'Public' : 'Private'} • {store.isActive ? 'Active' : 'Inactive'}
                 </p>
+                {store.isActive && (
+                  <div className="mt-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500">Store URL:</span>
+                      <a 
+                        href={store.isPublic ? `/store/${store.slug}` : `/business/${store.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-teal-600 hover:text-teal-700 underline"
+                      >
+                        {typeof window !== 'undefined' 
+                          ? `${window.location.origin}${store.isPublic ? `/store/${store.slug}` : `/business/${store.slug}`}`
+                          : `${store.isPublic ? `/store/${store.slug}` : `/business/${store.slug}`}`
+                        }
+                      </a>
+                      <button
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            const url = `${window.location.origin}${store.isPublic ? `/store/${store.slug}` : `/business/${store.slug}`}`;
+                            navigator.clipboard.writeText(url);
+                          }
+                        }}
+                        className="text-xs text-gray-500 hover:text-gray-700"
+                        title="Copy link"
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -451,6 +527,17 @@ export default function BusinessSettings() {
                 </span>
               </div>
             </div>
+            {store.isActive && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={handleUndeployStore}
+                  disabled={isDeploying}
+                  className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isDeploying ? 'Processing...' : `Remove ${store.isPublic ? 'Public' : 'Private'} Store`}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

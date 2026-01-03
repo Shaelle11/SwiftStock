@@ -47,7 +47,7 @@ export default function ExplorePage() {
       if (response.ok) {
         const data = await response.json();
         // Only show public and active stores
-        setStores((data.stores || []).filter((store: Store) => store.isPublic && store.isActive));
+        setStores((data.data?.stores || data.stores || []).filter((store: Store) => store.isPublic && store.isActive));
       } else {
         setError('Failed to load stores');
       }
