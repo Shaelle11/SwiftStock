@@ -143,6 +143,417 @@ export default function OrderDetail() {
   };
 
   const handlePrintReceipt = () => {
+    // Create a new window with just the receipt content using the same format as POS
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    if (!printWindow) {
+      alert('Please allow popups to print receipts');
+      return;
+    }
+
+    const receiptNumber = sale.invoiceNumber;
+    const subtotal = sale.subtotal;
+    const tax = sale.tax;
+
+    // Generate the complete receipt HTML using same format as POS
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Receipt - ${receiptNumber}</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #000;
+            background: white;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+          }
+          
+          .receipt-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #000;
+            line-height: 1.4;
+          }
+          
+          .store-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: ${store?.primaryColor || '#000'};
+            margin-bottom: 8px;
+            line-height: 1.2;
+          }
+          
+          .store-info {
+            font-size: 12px;
+            color: #000;
+            line-height: 1.5;
+            margin-bottom: 3px;
+          }
+          
+          .receipt-details {
+            margin-bottom: 25px;
+            line-height: 1.5;
+          }
+          
+          .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+          }
+          
+          .detail-item {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 8px;
+          }
+          
+          .detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+            line-height: 1.3;
+          }
+          
+          .detail-value {
+            font-weight: bold;
+            font-size: 14px;
+            color: #000;
+            line-height: 1.4;
+          }
+          
+          .separator {
+            width: 100%;
+            height: 1px;
+            background: #ddd;
+            margin: 15px 0;
+          }
+          
+          .items-section {
+            margin-bottom: 25px;
+          }
+          
+          .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #000;
+            line-height: 1.3;
+          }
+          
+          .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            line-height: 1.4;
+          }
+          
+          .item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+          }
+          
+          .item-info {
+            flex: 1;
+            margin-right: 15px;
+          }
+          
+          .item-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 3px;
+            line-height: 1.3;
+          }
+          
+          .item-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+          }
+          
+          .item-price {
+            font-weight: bold;
+            font-size: 14px;
+            text-align: right;
+            line-height: 1.3;
+          }
+          
+          .totals-section {
+            border-top: 2px solid #000;
+            padding-top: 12px;
+            margin-bottom: 25px;
+          }
+          
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+            line-height: 1.4;
+          }
+          
+          .total-row .total-label {
+            flex: 1;
+            min-width: 120px;
+            line-height: 1.3;
+          }
+          
+          .total-row .total-value {
+            flex-shrink: 0;
+            font-weight: bold;
+            text-align: right;
+            min-width: 80px;
+            line-height: 1.3;
+          }
+          
+          .total-row.final {
+            font-size: 18px;
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            margin-top: 8px;
+            margin-bottom: 0;
+            line-height: 1.2;
+          }
+          
+          .total-row.final .total-label {
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.2;
+          }
+          
+          .total-row.final .total-value {
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.2;
+          }
+          
+          .footer {
+            text-align: center;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+          }
+          
+          .footer .thank-you {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 8px;
+            line-height: 1.3;
+          }
+          
+          .footer > div:not(.thank-you) {
+            margin-bottom: 5px;
+            line-height: 1.5;
+          }
+          
+          .footer > div:last-child {
+            margin-bottom: 0;
+            margin-top: 8px;
+            line-height: 1.4;
+          }
+          
+          @media print {
+            body {
+              padding: 15px;
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            
+            .store-name {
+              font-size: 20px;
+              margin-bottom: 6px;
+              line-height: 1.1;
+            }
+            
+            .section-title {
+              font-size: 14px;
+              margin-bottom: 8px;
+              line-height: 1.2;
+            }
+            
+            .receipt-header {
+              margin-bottom: 20px;
+              padding-bottom: 12px;
+            }
+            
+            .receipt-details, .items-section {
+              margin-bottom: 20px;
+            }
+            
+            .totals-section {
+              margin-bottom: 20px;
+              padding-top: 10px;
+            }
+            
+            .item {
+              padding: 6px 0;
+            }
+            
+            .total-row {
+              margin-bottom: 4px;
+            }
+            
+            .total-row.final {
+              margin-top: 6px;
+              padding-top: 6px;
+            }
+            
+            .footer {
+              padding-top: 12px;
+            }
+            
+            .detail-grid {
+              gap: 8px;
+              margin-bottom: 12px;
+            }
+            
+            .detail-item {
+              margin-bottom: 6px;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-header">
+          <div class="store-name">${sale.store?.businessName || sale.store?.name || 'Your Store'}</div>
+          ${sale.store?.address ? `<div class="store-info">${sale.store.address}</div>` : ''}
+          ${sale.store?.phone ? `<div class="store-info">${sale.store.phone}</div>` : ''}
+        </div>
+
+        <div class="receipt-details">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <div class="detail-label">Receipt #:</div>
+              <div class="detail-value">${receiptNumber}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Date & Time:</div>
+              <div class="detail-value">${formatDateTime(sale.createdAt)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Customer:</div>
+              <div class="detail-value">${sale.customerName || sale.customer?.name || 'Guest Customer'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Order Type:</div>
+              <div class="detail-value">${
+                sale.deliveryType === 'WALK_IN' || sale.deliveryType === 'walk-in' ? 'Walk-in' : 
+                sale.deliveryType === 'DELIVERY' || sale.deliveryType === 'delivery' ? 'Delivery' : 
+                sale.deliveryType === 'PICKUP' || sale.deliveryType === 'pickup' ? 'Pickup' : 'Walk-in'
+              }</div>
+            </div>
+            ${sale.customerPhone || sale.customer?.phone ? `
+              <div class="detail-item">
+                <div class="detail-label">Phone:</div>
+                <div class="detail-value">${sale.customerPhone || sale.customer?.phone}</div>
+              </div>
+            ` : ''}
+            <div class="detail-item">
+              <div class="detail-label">Payment Method:</div>
+              <div class="detail-value">${sale.paymentMethod}</div>
+            </div>
+          </div>
+        </div>
+
+        ${(sale.deliveryType === 'DELIVERY' || sale.deliveryType === 'delivery') && sale.deliveryAddress ? `
+          <div class="delivery-section" style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+            <div class="section-title">Delivery Information</div>
+            <div class="detail-item">
+              <div class="detail-label">Delivery Address:</div>
+              <div class="detail-value">${sale.deliveryAddress}</div>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="items-section">
+          <div class="section-title">Items Purchased</div>
+          ${sale.items.map(item => `
+            <div class="item">
+              <div class="item-info">
+                <div class="item-name">${item.productName}</div>
+                <div class="item-details">
+                  ${formatCurrency(item.unitPrice)} × ${item.quantity}
+                </div>
+              </div>
+              <div class="item-price">${formatCurrency(item.subtotal)}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="totals-section">
+          <div class="total-row">
+            <span class="total-label">Subtotal:</span>
+            <span class="total-value">${formatCurrency(subtotal)}</span>
+          </div>
+          <div class="total-row">
+            <span class="total-label">Tax (VAT 7.5%):</span>
+            <span class="total-value">${formatCurrency(tax)}</span>
+          </div>
+          ${sale.discount && sale.discount > 0 ? `
+            <div class="total-row">
+              <span class="total-label">Discount:</span>
+              <span class="total-value">-${formatCurrency(sale.discount)}</span>
+            </div>
+          ` : ''}
+          <div class="total-row final">
+            <span class="total-label">TOTAL:</span>
+            <span class="total-value">${formatCurrency(sale.total)}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div class="thank-you">Thank you for your business!</div>
+          <div>Items sold are non-refundable • Please keep this receipt for your records</div>
+          <div style="margin-top: 8px; font-size: 11px;">
+            Receipt generated on ${formatDateTime(sale.createdAt)}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Write the HTML to the new window
+    printWindow.document.open();
+    printWindow.document.write(receiptHTML);
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      // Close the window after printing (optional)
+      setTimeout(() => {
+        printWindow.close();
+      }, 100);
+    };
+  const handleBack = () => {
+    router.push(`/business/${businessSlug}/orders`);
+  };
+
+  const handlePrintReceipt = () => {
     window.print();
   };
 

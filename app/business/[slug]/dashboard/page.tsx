@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams } from 'next/navigation';
+import { Sale } from '@/lib/types';
 
 interface Product {
   id: string;
@@ -72,7 +73,7 @@ export default function BusinessDashboard() {
   const isNewBusiness = business && business._count.products === 0;
 
   // Sales and revenue calculations
-  const getMonthlyRevenue = useCallback((sales: SaleData[]): number => {
+  const getMonthlyRevenue = useCallback((sales: Sale[]): number => {
     const now = new Date();
     const thisMonth = now.getMonth();
     const thisYear = now.getFullYear();
@@ -85,7 +86,7 @@ export default function BusinessDashboard() {
       .reduce((total, sale) => total + sale.total, 0);
   }, []);
 
-  const getDailyMetrics = useCallback((sales: SaleData[]): { revenue: number; count: number } => {
+  const getDailyMetrics = useCallback((sales: Sale[]): { revenue: number; count: number } => {
     const today = new Date().toDateString();
     const todaysSales = sales.filter(sale => new Date(sale.createdAt).toDateString() === today);
     
@@ -142,12 +143,10 @@ export default function BusinessDashboard() {
         });
 
         // Generate recent orders
-        const orders: RecentOrder[] = salesArray.slice(0, 5).map((sale: SaleData, index: number) => ({
+        const orders: RecentOrder[] = salesArray.slice(0, 5).map((sale: Sale, index: number) => ({
           id: sale.id,
           orderNumber: `ORD-${Date.now() + index}`,
-          customerName: sale.customer?.firstName && sale.customer?.lastName 
-            ? `${sale.customer.firstName} ${sale.customer.lastName}`
-            : 'Walk-in Customer',
+          customerName: 'Walk-in Customer', // Default since customer info isn't included in sales
           total: sale.total,
           status: 'paid',
           createdAt: sale.createdAt
@@ -168,7 +167,7 @@ export default function BusinessDashboard() {
         const productsArray = productsData.data?.items || [];
         
         const alerts: InventoryAlert[] = productsArray
-          .filter((product: ProductData) => 
+          .filter((product: Product) => 
             product.stockQuantity <= product.lowStockThreshold
           )
           .slice(0, 5)
