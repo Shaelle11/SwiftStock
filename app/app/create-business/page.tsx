@@ -108,7 +108,7 @@ export default function CreateBusinessPage() {
     'Business Identity',
     'Location & Legal',
     'Inventory & Sales',
-    'Storefront Setup',
+    'Store Setup',
     'Tax & Compliance',
     'Contact Information',
     'Review & Create'
@@ -139,8 +139,8 @@ export default function CreateBusinessPage() {
         return !!(formData.state && formData.city && formData.address && formData.registrationStatus);
       case 3: // Inventory & Sales
         return !!(formData.inventoryType);
-      case 4: // Storefront Setup
-        return !!(formData.storeVisibility && formData.slug);
+      case 4: // Store Setup
+        return !!formData.slug;
       case 5: // Tax & Compliance
         return true; // All fields are optional or have defaults
       case 6: // Additional Info
@@ -189,7 +189,7 @@ export default function CreateBusinessPage() {
           primaryColor: formData.primaryColor,
           businessType: formData.businessType,
           slug: formData.slug,
-          isPublic: formData.storeVisibility === 'public',
+          isPublic: false,
           // Add other relevant fields to your API
         }),
       });
@@ -496,43 +496,25 @@ export default function CreateBusinessPage() {
           </div>
         );
 
-      case 4: // Storefront Setup
+      case 4: // Store Setup
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Storefront Setup</h2>
-              <p className="text-gray-600">Configure your public-facing store</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Store Setup</h2>
+              <p className="text-gray-600">Configure your store URL and basic settings</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Store Visibility *</label>
-              <div className="space-y-2">
-                <label className="flex items-start">
-                  <input
-                    type="radio"
-                    value="public"
-                    checked={formData.storeVisibility === 'public'}
-                    onChange={(e) => handleChange('storeVisibility', e.target.value)}
-                    className="mr-3 mt-1"
-                  />
-                  <div>
-                    <span className="font-medium text-gray-900">Public</span>
-                    <p className="text-sm text-gray-500">Listed on Explore page, discoverable by customers</p>
-                  </div>
-                </label>
-                <label className="flex items-start">
-                  <input
-                    type="radio"
-                    value="private"
-                    checked={formData.storeVisibility === 'private'}
-                    onChange={(e) => handleChange('storeVisibility', e.target.value)}
-                    className="mr-3 mt-1"
-                  />
-                  <div>
-                    <span className="font-medium text-gray-900">Private</span>
-                    <p className="text-sm text-gray-500">Only accessible via direct link</p>
-                  </div>
-                </label>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="font-medium text-blue-900 mb-1">Store Visibility</h4>
+                  <p className="text-sm text-blue-800">
+                    Your store will be created as <strong>Private</strong> initially. You can make it public later from your dashboard after adding products to your inventory.
+                  </p>
+                </div>
               </div>
             </div>
 

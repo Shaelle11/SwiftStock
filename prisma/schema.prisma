@@ -1,277 +1,249 @@
-// SwiftStock Database Schema
-// Inventory & Sales Management System
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  isActive  Boolean  @default(true)
-  storeId   String?  // For business users (employees), null for customers
-  
-  // Customer-specific fields
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  firstName   String
+  lastName    String
+  isActive    Boolean   @default(true)
+  storeId     String?
   phone       String?
   address     String?
   dateOfBirth DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  ownedStore     Store?  @relation("StoreOwner")
-  salesMade      Sale[]  @relation("SalesCashier")
-  orders         Order[] @relation("CustomerOrders")
-  carts          Cart[]  @relation("CustomerCarts")
-  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  carts       Cart[]    @relation("CustomerCarts")
+  orders      Order[]   @relation("CustomerOrders")
+  salesMade   Sale[]    @relation("SalesCashier")
+  ownedStore  Store?    @relation("StoreOwner")
+
   @@map("users")
 }
 
 model Store {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  address     String
-  phone       String
-  email       String
-  slug        String  @unique
-  isActive    Boolean @default(true)
-  isPublic    Boolean @default(false) // Whether store is visible to customers
-  ownerId     String  @unique
-  
-  // Tax Identity (Business Information)
-  cacNumber     String? // Corporate Affairs Commission Registration Number
-  tin           String? // Tax Identification Number
-  vatRegistered Boolean @default(false) // Whether business is VAT registered
-  currency      String  @default("NGN") // Default to Nigerian Naira
-  state         String? // For tax jurisdiction
-  country       String  @default("Nigeria")
-  
-  // Branding
-  logoUrl       String?
-  primaryColor  String @default("#000000")
-  secondaryColor String @default("#ffffff")
-  accentColor   String @default("#3b82f6")
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deployedAt DateTime? // When store was last deployed
-  
-  // Relations
-  owner        User         @relation("StoreOwner", fields: [ownerId], references: [id])
-  products     Product[]
-  sales        Sale[]
-  orders       Order[]
-  carts        Cart[]
-  tools        Tool[]       @relation("StoreTools")
-  settings     StoreSettings?
-  taxRecords   TaxRecord[]
-  taxSummaries TaxSummary[]
-  storeProducts StoreProduct[] // Deployed products
-  
-  // Tax-related relations
-  taxPeriods   TaxPeriod[] // Tax reporting periods
-  purchases    Purchase[]  // Input VAT tracking
-  auditLogs    AuditLog[]  // Compliance audit trail
-  
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  address        String
+  phone          String
+  email          String
+  slug           String         @unique
+  isActive       Boolean        @default(true)
+  isPublic       Boolean        @default(false)
+  ownerId        String         @unique
+  cacNumber      String?
+  tin            String?
+  vatRegistered  Boolean        @default(false)
+  currency       String         @default("NGN")
+  state          String?
+  country        String         @default("Nigeria")
+  logoUrl        String?
+  primaryColor   String         @default("#000000")
+  secondaryColor String         @default("#ffffff")
+  accentColor    String         @default("#3b82f6")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deployedAt     DateTime?
+  auditLogs      AuditLog[]
+  orders         Order[]
+  products       Product[]
+  purchases      Purchase[]
+  sales          Sale[]
+  storeProducts  StoreProduct[]
+  settings       StoreSettings?
+  owner          User           @relation("StoreOwner", fields: [ownerId], references: [id])
+  taxPeriods     TaxPeriod[]
+  taxRecords     TaxRecord[]
+  taxSummaries   TaxSummary[]
+  tools          Tool[]         @relation("StoreTools")
+
   @@map("stores")
 }
 
 model Product {
-  id                String  @id @default(cuid())
+  id                String         @id @default(cuid())
   name              String
   description       String?
   category          String
   costPrice         Float
   sellingPrice      Float
   stockQuantity     Int
-  lowStockThreshold Int     @default(10)
+  lowStockThreshold Int            @default(10)
   barcode           String?
   imageUrl          String?
-  isActive          Boolean @default(true)
+  isActive          Boolean        @default(true)
   storeId           String
-  
-  // Tax Classification
-  taxCategory       String  @default("VATABLE") // "VATABLE" | "VAT_EXEMPT" | "ZERO_RATED"
-  vatRate           Float   @default(7.5) // Nigeria standard VAT rate 7.5%
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  saleItems SaleItem[]
-  cartItems CartItem[]
-  orderItems OrderItem[]
-  storeProducts StoreProduct[] // Store deployment tracking
-  
+  taxCategory       String         @default("VATABLE")
+  vatRate           Float          @default(7.5)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  store             Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  saleItems         SaleItem[]
+  storeProducts     StoreProduct[]
+
   @@map("products")
 }
 
 model Sale {
-  id            String        @id @default(cuid())
+  id            String     @id @default(cuid())
   storeId       String
   cashierId     String
   customerId    String?
-  invoiceNumber String        @unique // Important for tax compliance
+  customerName  String?
+  customerPhone String?
+  customerAddress String?
+  deliveryType  String     @default("WALK_IN") // WALK_IN, DELIVERY, PICKUP
+  deliveryPrice Float      @default(0)
+  deliveryAddress String?
+  deliveryStatus String?    // PENDING, ASSIGNED, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, FAILED
+  riderName     String?
+  riderPhone    String?
+  parcelNumber  String?
+  deliveryNotes String?
+  deliveredAt   DateTime?
+  deliveryDuration Int?     // Duration in hours
+  invoiceNumber String     @unique
   subtotal      Float
   tax           Float
-  discount      Float         @default(0)
+  discount      Float      @default(0)
   total         Float
-  
-  // VAT Calculation Fields
-  grossAmount   Float // Total including VAT
-  vatAmount     Float // Total VAT collected (Output VAT)
-  netAmount     Float // Amount before VAT
-  
-  paymentMethod String        @default("POS") // "POS" | "Transfer" | "Cash" etc
-  taxPeriodId   String? // Link to tax period for reporting
+  grossAmount   Float
+  vatAmount     Float
+  netAmount     Float
+  paymentMethod String     @default("POS")
+  taxPeriodId   String?
   notes         String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  cashier   User        @relation("SalesCashier", fields: [cashierId], references: [id])
-  items     SaleItem[]
-  taxPeriod TaxPeriod?  @relation(fields: [taxPeriodId], references: [id])
-  taxRecord TaxRecord?  @relation("SaleTaxRecord")
-  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  items         SaleItem[]
+  cashier       User       @relation("SalesCashier", fields: [cashierId], references: [id])
+  store         Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  taxPeriod     TaxPeriod? @relation(fields: [taxPeriodId], references: [id])
+  taxRecord     TaxRecord? @relation("SaleTaxRecord")
+
   @@map("sales")
 }
 
 model SaleItem {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   saleId      String
   productId   String
-  productName String // Store name at time of sale
+  productName String
   quantity    Int
-  unitPrice   Float  // Price at time of sale
-  subtotal    Float  // Line total before VAT
-  
-  // Tax Classification (copied from product at time of sale for audit trail)
-  taxCategory String // "VATABLE" | "VAT_EXEMPT" | "ZERO_RATED"
-  vatRate     Float  // VAT rate at time of sale
-  vatAmount   Float  // VAT for this line item
-  totalAmount Float  // Total for this line item including VAT
-  
-  // Relations
-  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-  
+  unitPrice   Float
+  subtotal    Float
+  taxCategory String
+  vatRate     Float
+  vatAmount   Float
+  totalAmount Float
+  product     Product @relation(fields: [productId], references: [id])
+  sale        Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
   @@map("sale_items")
 }
 
 model Cart {
-  id         String    @id @default(cuid())
-  customerId String?
-  storeId    String
-  expiresAt  DateTime? // For guest carts
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  customer User?      @relation("CustomerCarts", fields: [customerId], references: [id])
-  store    Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  items    CartItem[]
-  
+  id         String     @id @default(cuid())
+  userId     String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  items      CartItem[]
+  user       User       @relation("CustomerCarts", fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("carts")
 }
 
 model CartItem {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   cartId    String
   productId String
   quantity  Int
-  
-  // Relations
-  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-  
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
   @@unique([cartId, productId])
   @@map("cart_items")
 }
 
 model Order {
-  id            String        @id @default(cuid())
-  orderNumber   String        @unique
-  storeId       String
-  customerId    String?
-  
-  // Customer information
+  id                String      @id @default(cuid())
+  orderNumber       String      @unique
+  storeId           String
+  customerId        String?
   customerFirstName String
   customerLastName  String
   customerEmail     String
   customerPhone     String
   customerAddress   String?
-  
-  subtotal      Float
-  tax           Float
-  shipping      Float         @default(0)
-  discount      Float         @default(0)
-  total         Float
-  status        String        @default("PENDING")
-  paymentStatus String        @default("PENDING")
-  paymentMethod String?
-  notes         String?
-  
-  // Tax-specific fields (immutable at order completion)
-  vatRate       Float         @default(0) // VAT rate used (e.g., 0.075 for 7.5%)
-  vatAmount     Float         @default(0) // Exact VAT collected
-  taxableAmount Float         @default(0) // Amount before VAT
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  store     Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  customer  User?       @relation("CustomerOrders", fields: [customerId], references: [id])
-  items     OrderItem[]
-  taxRecord TaxRecord?  @relation("OrderTaxRecord")
-  
+  deliveryType      String      @default("WALK_IN") // WALK_IN, DELIVERY, PICKUP
+  deliveryPrice     Float       @default(0)
+  deliveryAddress   String?
+  deliveryStatus    String?     // PENDING, ASSIGNED, SHIPPED, OUT_FOR_DELIVERY, DELIVERED, FAILED
+  riderName         String?
+  riderPhone        String?
+  parcelNumber      String?
+  deliveryNotes     String?
+  deliveredAt       DateTime?
+  deliveryDuration  Int?        // Duration in hours
+  subtotal          Float
+  tax               Float
+  shipping          Float       @default(0)
+  discount          Float       @default(0)
+  total             Float
+  status            String      @default("PENDING")
+  paymentStatus     String      @default("PENDING")
+  paymentMethod     String?
+  notes             String?
+  vatRate           Float       @default(0)
+  vatAmount         Float       @default(0)
+  taxableAmount     Float       @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  items             OrderItem[]
+  customer          User?       @relation("CustomerOrders", fields: [customerId], references: [id])
+  store             Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  taxRecord         TaxRecord?  @relation("OrderTaxRecord")
+
   @@map("orders")
 }
 
 model OrderItem {
-  id          String @id @default(cuid())
+  id          String  @id @default(cuid())
   orderId     String
   productId   String
-  productName String // Store name at time of order
-  unitPrice   Float  // Price at time of order
+  productName String
+  unitPrice   Float
   quantity    Int
   subtotal    Float
-  
-  // Relations
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-  
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+
   @@map("order_items")
 }
 
 model Tool {
-  id                String    @id @default(cuid())
+  id                String   @id @default(cuid())
   name              String
   type              String
   serialNumber      String
   itemNumber        String
-  status            String     @default("ACTIVE")
+  status            String   @default("ACTIVE")
   unitOfMeasurement String
   amount            Float
   price             Float
   datePurchased     DateTime
   currency          String
-  store             String    // Store name/location
+  store             String
   project           String
   department        String
   category          String
@@ -281,190 +253,139 @@ model Tool {
   warrantyUrl       String?
   piDocumentUrl     String?
   storeId           String
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  storeRelation Store @relation("StoreTools", fields: [storeId], references: [id], onDelete: Cascade)
-  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  storeRelation     Store    @relation("StoreTools", fields: [storeId], references: [id], onDelete: Cascade)
+
   @@map("tools")
 }
 
-// Tax Management Models
-
 model StoreSettings {
-  id           String  @id @default(cuid())
-  storeId      String  @unique
-  vatEnabled   Boolean @default(true)
-  vatRate      Float   @default(0.075) // 7.5% default for Nigeria
-  taxIdNumber  String? // Business TIN/VAT number
-  
-  // Business registration details
+  id                String   @id @default(cuid())
+  storeId           String   @unique
+  vatEnabled        Boolean  @default(true)
+  vatRate           Float    @default(0.075)
+  taxIdNumber       String?
   businessRegNumber String?
-  businessType      String? // Limited Company, Partnership, etc.
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+  businessType      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  store             Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@map("store_settings")
 }
 
 model TaxRecord {
-  id        String @id @default(cuid())
-  storeId   String
-  saleId    String? // For POS sales
-  orderId   String? // For ecommerce orders
-  
-  // Tax snapshot (immutable)
-  taxableAmount  Float   // Amount before tax
-  vatRate        Float   // Rate used at time of sale
-  vatCollected   Float   // Exact VAT amount collected
-  totalAmount    Float   // Final amount charged
-  
-  // Transaction details
-  transactionType String  // "SALE" or "ORDER"
+  id              String   @id @default(cuid())
+  storeId         String
+  saleId          String?  @unique
+  orderId         String?  @unique
+  taxableAmount   Float
+  vatRate         Float
+  vatCollected    Float
+  totalAmount     Float
+  transactionType String
   paymentMethod   String
-  
-  // Tax period categorization
-  taxPeriod      String  // Format: "YYYY-MM" (e.g., "2025-01")
-  taxYear        Int     // For annual reporting
-  taxMonth       Int     // For monthly reporting
-  
-  createdAt DateTime @default(now())
-  
-  // Relations
-  store Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  sale  Sale?  @relation("SaleTaxRecord", fields: [saleId], references: [id])
-  order Order? @relation("OrderTaxRecord", fields: [orderId], references: [id])
-  
-  // Ensure one tax record per transaction
-  @@unique([saleId])
-  @@unique([orderId])
+  taxPeriod       String
+  taxYear         Int
+  taxMonth        Int
+  createdAt       DateTime @default(now())
+  order           Order?   @relation("OrderTaxRecord", fields: [orderId], references: [id])
+  sale            Sale?    @relation("SaleTaxRecord", fields: [saleId], references: [id])
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@map("tax_records")
 }
 
 model TaxSummary {
-  id      String @id @default(cuid())
-  storeId String
-  period  String  // Format: "YYYY-MM"
-  
-  // Aggregated totals
-  totalSales       Float // Total taxable sales
-  totalVatCollected Float // Total VAT collected
-  totalOrders      Int   // Number of transactions
-  totalRevenue     Float // Gross revenue (including VAT)
-  
-  // Monthly breakdown
-  year  Int
-  month Int
-  
-  // Summary metadata
-  generatedAt DateTime @default(now())
-  isFinalized Boolean  @default(false) // Prevents modification after period close
-  
-  // Relations
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+  id                String   @id @default(cuid())
+  storeId           String
+  period            String
+  totalSales        Float
+  totalVatCollected Float
+  totalOrders       Int
+  totalRevenue      Float
+  year              Int
+  month             Int
+  generatedAt       DateTime @default(now())
+  isFinalized       Boolean  @default(false)
+  store             Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@unique([storeId, period])
   @@map("tax_summaries")
 }
 
-// Store-Product relationship for deployment tracking
 model StoreProduct {
-  id          String  @id @default(cuid())
-  storeId     String
-  productId   String
-  isDeployed  Boolean @default(true) // Whether this product is currently deployed
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(cuid())
+  storeId    String
+  productId  String
+  isDeployed Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@unique([storeId, productId])
   @@map("store_products")
 }
 
-// Tax Period Management - Critical for compliance
 model TaxPeriod {
-  id        String   @id @default(cuid())
-  storeId   String
-  startDate DateTime // Period start (e.g., 2026-01-01)
-  endDate   DateTime // Period end (e.g., 2026-01-31)
-  status    String   @default("OPEN") // "OPEN" | "CLOSED"
-  closedAt  DateTime? // When period was closed
-  closedBy  String?  // User who closed the period
-  
-  // Generated fields (calculated when closing period)
-  totalSales      Float? // Total sales for period
-  vatableSales    Float? // VAT applicable sales
-  outputVat       Float? // VAT collected from customers
-  inputVat        Float? // VAT paid on purchases
-  vatPayable      Float? // Net VAT owed (Output - Input)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  sales     Sale[] // Sales in this period
-  purchases Purchase[] // Purchases in this period
-  
+  id           String     @id @default(cuid())
+  storeId      String
+  startDate    DateTime
+  endDate      DateTime
+  status       String     @default("OPEN")
+  closedAt     DateTime?
+  closedBy     String?
+  totalSales   Float?
+  vatableSales Float?
+  outputVat    Float?
+  inputVat     Float?
+  vatPayable   Float?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  purchases    Purchase[]
+  sales        Sale[]
+  store        Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@map("tax_periods")
 }
 
-// Purchase Tracking for Input VAT
 model Purchase {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   storeId       String
-  supplierName  String   // Supplier/vendor name
-  supplierTin   String?  // Supplier's TIN for compliance
-  invoiceNumber String   // Supplier's invoice number
-  date          DateTime // Purchase date
-  
-  // Purchase amounts
-  grossAmount   Float    // Total including VAT
-  vatAmount     Float    // VAT paid (Input VAT)
-  netAmount     Float    // Amount before VAT
-  
-  description   String?  // What was purchased
-  paymentMethod String   @default("Transfer") // How payment was made
-  taxPeriodId   String?  // Link to tax period
-  
-  // Audit fields
-  recordedBy    String   // User who recorded this purchase
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  // Relations
-  store     Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  taxPeriod TaxPeriod? @relation(fields: [taxPeriodId], references: [id])
-  
+  supplierName  String
+  supplierTin   String?
+  invoiceNumber String
+  date          DateTime
+  grossAmount   Float
+  vatAmount     Float
+  netAmount     Float
+  description   String?
+  paymentMethod String     @default("Transfer")
+  taxPeriodId   String?
+  recordedBy    String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  store         Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  taxPeriod     TaxPeriod? @relation(fields: [taxPeriodId], references: [id])
+
   @@map("purchases")
 }
 
-// Audit Log for Legal Compliance
 model AuditLog {
   id          String   @id @default(cuid())
   storeId     String
-  entityType  String   // "Sale", "Product", "TaxPeriod", etc.
-  entityId    String   // ID of the affected record
-  action      String   // "CREATE", "UPDATE", "DELETE", "CLOSE_PERIOD"
-  oldValue    String?  // JSON string of old values
-  newValue    String?  // JSON string of new values
-  performedBy String   // User ID who performed the action
+  entityType  String
+  entityId    String
+  action      String
+  oldValue    String?
+  newValue    String?
+  performedBy String
   timestamp   DateTime @default(now())
-  ipAddress   String?  // For security audit
-  userAgent   String?  // Browser/app info
-  
-  // Relations
-  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
+  ipAddress   String?
+  userAgent   String?
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   @@map("audit_logs")
 }

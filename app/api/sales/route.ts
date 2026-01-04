@@ -5,7 +5,14 @@ import { z } from 'zod';
 import { calculateSubtotal, calculateVAT } from '@/lib/sales';
 
 const saleSchema = z.object({
-  customerId: z.string().optional(),
+  customerId: z.string().optional().nullable(),
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
+  customerAddress: z.string().optional(),
+  deliveryType: z.enum(['WALK_IN', 'DELIVERY', 'PICKUP']).default('WALK_IN'),
+  deliveryAddress: z.string().optional(),
+  deliveryPrice: z.number().min(0).default(0),
+  deliveryStatus: z.enum(['PENDING', 'ASSIGNED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FAILED']).optional(),
   items: z.array(z.object({
     productId: z.string().min(1, 'Product ID is required'),
     quantity: z.number().int().min(1, 'Quantity must be at least 1'),
@@ -18,17 +25,26 @@ const saleSchema = z.object({
 // POST - Create a new sale
 export async function POST(request: NextRequest) {
   try {
+    console.log('Sales API called');
     const { user, error } = await verifyAuth(request);
     
     if (!user) {
+      console.log('Authentication failed:', error);
       return NextResponse.json(
         { success: false, message: error || 'Unauthorized' },
         { status: 401 }
       );
     }
 
+    console.log('User authenticated:', { 
+      id: user.id, 
+      userType: user.userType, 
+      storeId: user.storeId 
+    });
+
     // Only business owners and employees can make sales
     if (!['business_owner', 'employee'].includes(user.userType)) {
+      console.log('Insufficient permissions for user type:', user.userType);
       return NextResponse.json(
         { success: false, message: 'Insufficient permissions' },
         { status: 403 }
@@ -36,6 +52,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user.storeId) {
+      console.log('User storeId check failed:', { 
+        userId: user.id, 
+        userType: user.userType, 
+        storeId: user.storeId,
+        ownedStores: user.ownedStores?.map(s => s.id)
+      });
       return NextResponse.json(
         { success: false, message: 'User must be associated with a store' },
         { status: 400 }
@@ -43,27 +65,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('Request body received:', body);
     
     // Validate input
     const validationResult = saleSchema.safeParse(body);
     
     if (!validationResult.success) {
+      console.log('Validation errors:', validationResult.error.issues);
       return NextResponse.json(
         {
           success: false,
           message: 'Validation failed',
-          errors: validationResult.error.issues
+          errors: validationResult.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`)
         },
         { status: 400 }
       );
     }
 
-    const { items, paymentMethod, discount, notes, customerId } = validationResult.data;
+    console.log('Validation passed, processing sale...');
+    const { items, paymentMethod, discount, notes, customerId, customerName, customerPhone, customerAddress, deliveryType, deliveryAddress, deliveryPrice, deliveryStatus } = validationResult.data;
 
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
+      console.log('Starting transaction...');
       // Get all products and check availability
       const productIds = items.map(item => item.productId);
+      console.log('Product IDs:', productIds);
+      
       const products = await tx.product.findMany({
         where: {
           id: { in: productIds },
@@ -72,7 +100,10 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      console.log('Found products:', products.length);
+
       if (products.length !== productIds.length) {
+        console.log('Product count mismatch:', { expected: productIds.length, found: products.length });
         throw new Error('Some products not found or inactive');
       }
 
@@ -137,16 +168,23 @@ export async function POST(request: NextRequest) {
           storeId: user.storeId!,
           cashierId: user.id,
           customerId: customerId || null,
+          customerName: customerName || null,
+          customerPhone: customerPhone || null,
+          customerAddress: customerAddress || null,
+          deliveryType: deliveryType,
+          deliveryAddress: deliveryAddress || null,
+          deliveryPrice: deliveryPrice || 0,
+          deliveryStatus: deliveryStatus || null,
           invoiceNumber: `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           subtotal: discountedSubtotal,
           tax,
           discount: discountAmount,
-          total,
+          total: total + (deliveryPrice || 0), // Add delivery price to total
           paymentMethod: paymentMethod.toUpperCase() as 'CASH' | 'CARD' | 'TRANSFER' | 'OTHER',
           notes,
           // Tax-specific fields - vatRate handled separately
           vatAmount: tax,
-          grossAmount: total,
+          grossAmount: total + (deliveryPrice || 0),
           netAmount: discountedSubtotal,
           items: {
             create: saleItems.map(item => ({
@@ -158,23 +196,7 @@ export async function POST(request: NextRequest) {
               taxCategory: 'VATABLE' as const,
               vatRate: 7.5,
               vatAmount: (item.subtotal * 7.5) / 107.5,
-              totalAmount: item.subtotal,
-              product: {
-                connect: { id: item.productId }
-              }
-            })).map(item => ({
-              productId: item.productId,
-              productName: item.productName,
-              unitPrice: item.unitPrice,
-              quantity: item.quantity,
-              subtotal: item.subtotal,
-              taxCategory: 'VATABLE' as const,
-              vatRate: 7.5,
-              vatAmount: (item.subtotal * 7.5) / 107.5,
-              totalAmount: item.subtotal,
-              product: {
-                connect: { id: item.productId }
-              }
+              totalAmount: item.subtotal
             }))
           }
         },
@@ -184,6 +206,26 @@ export async function POST(request: NextRequest) {
               product: true
             }
           }
+        }
+      });
+
+      // Create tax record for compliance tracking
+      const now = new Date();
+      const taxPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      await tx.taxRecord.create({
+        data: {
+          storeId: user.storeId!,
+          saleId: sale.id,
+          taxableAmount: discountedSubtotal,
+          vatRate: 7.5,
+          vatCollected: tax,
+          totalAmount: total,
+          transactionType: 'SALE',
+          paymentMethod: paymentMethod.toUpperCase(),
+          taxPeriod,
+          taxYear: now.getFullYear(),
+          taxMonth: now.getMonth() + 1
         }
       });
 
@@ -238,13 +280,46 @@ export async function GET(request: NextRequest) {
     const endDate = url.searchParams.get('endDate');
     const cashierId = url.searchParams.get('cashierId');
     const paymentMethod = url.searchParams.get('paymentMethod');
+    const businessId = url.searchParams.get('businessId');
 
     // Build where clause
     const where: Record<string, unknown> = {};
 
-    // Add store filter
-    if (user.storeId) {
-      where.storeId = user.storeId;
+    // Add store filter based on user type
+    if (user.userType === 'business_owner') {
+      if (businessId) {
+        // If businessId is provided, verify ownership
+        const ownedStore = await prisma.store.findFirst({
+          where: {
+            id: businessId,
+            ownerId: user.id
+          }
+        });
+
+        if (!ownedStore) {
+          return NextResponse.json(
+            { success: false, message: 'Store not found or access denied' },
+            { status: 404 }
+          );
+        }
+
+        where.storeId = businessId;
+      } else {
+        // If no businessId provided, allow access to all owned stores
+        const ownedStores = await prisma.store.findMany({
+          where: { ownerId: user.id },
+          select: { id: true }
+        });
+
+        where.storeId = {
+          in: ownedStores.map(store => store.id)
+        };
+      }
+    } else {
+      // For employees, use the user's assigned store
+      if (user.storeId) {
+        where.storeId = user.storeId;
+      }
     }
 
     // Date filters

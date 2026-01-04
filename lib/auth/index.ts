@@ -374,7 +374,7 @@ export async function getUserById(id: string): Promise<AuthUser | null> {
         phone: user.phone || undefined,
         address: user.address || undefined
       }, user.ownedStore ? [{ ...user.ownedStore, description: user.ownedStore.description || undefined }] : []),
-      storeId: user.ownedStore?.id
+      storeId: user.ownedStore?.id || user.storeId || undefined // Business owner's store or employee's assigned store
     };
   } catch {
     console.error('Get user error');

@@ -12,7 +12,15 @@ const productSchema = z.object({
   stockQuantity: z.number().int().min(0, 'Stock quantity must be a non-negative integer'),
   lowStockThreshold: z.number().int().min(0, 'Low stock threshold must be a non-negative integer'),
   barcode: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.union([
+    z.string().url('Image URL must be valid'),
+    z.literal(''),
+    z.undefined(),
+    z.null()
+  ]).optional().transform((val) => {
+    if (!val || val === '' || val === null) return undefined;
+    return val;
+  }),
   isActive: z.boolean().optional(),
 });
 

@@ -3,10 +3,12 @@
 import { useState, useContext } from 'react';
 import ProductPicker from "@/components/features/pos/ProductPicker";
 import CartSummary from "@/components/features/pos/CartSummary";
+import CustomerInfoModal from "@/components/features/pos/CustomerInfoModal";
 import { useAuth, AuthContext } from '@/contexts/AuthContext';
 import { api, formatCurrency } from '@/lib/utils/api';
 import { calculateSubtotal, calculateVAT } from '@/lib/sales';
 import { getStoreBrandStyles } from '@/lib/store-branding';
+import ReceiptModal from '@/components/features/pos/ReceiptModal';
 import type { Product } from '@/lib/types';
 
 interface CartItem {
@@ -14,6 +16,13 @@ interface CartItem {
   product: Product;
   quantity: number;
   subtotal: number;
+}
+
+interface CustomerInfo {
+  name?: string;
+  phone?: string;
+  address?: string;
+  deliveryType: 'WALK_IN' | 'DELIVERY' | 'PICKUP';
 }
 
 export default function POSPage() {
@@ -24,6 +33,13 @@ export default function POSPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
+    deliveryType: 'WALK_IN'
+  });
+  const [lastSale, setLastSale] = useState<any>(null);
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState<string | null>(null);
 
   // Calculate totals
   const subtotal = calculateSubtotal(cart.map(item => ({
@@ -91,6 +107,14 @@ export default function POSPage() {
       return;
     }
 
+    // Show customer info modal if needed
+    setPendingPaymentMethod(paymentMethod);
+    setShowCustomerModal(true);
+  };
+
+  const completeSale = async () => {
+    if (!pendingPaymentMethod) return;
+
     setIsProcessing(true);
     setError(null);
 
@@ -100,20 +124,43 @@ export default function POSPage() {
           productId: item.productId,
           quantity: item.quantity
         })),
-        paymentMethod,
-        discount: 0
+        paymentMethod: pendingPaymentMethod,
+        discount: 0,
+        customerName: customerInfo.name || undefined,
+        customerPhone: customerInfo.phone || undefined,
+        customerAddress: customerInfo.address || undefined,
+        deliveryType: customerInfo.deliveryType
       };
+
+      console.log('Sending sale data:', saleData); // Debug log
 
       const response = await api.post('/api/sales', saleData);
       
       if (response.success) {
+        setLastSale({
+          id: response.data.id,
+          total: response.data.total,
+          items: cart.map(item => ({
+            productId: item.productId,
+            product: item.product,
+            quantity: item.quantity,
+            subtotal: item.subtotal
+          })),
+          paymentMethod: pendingPaymentMethod,
+          customerInfo,
+          createdAt: new Date().toISOString()
+        });
         clearCart();
-        alert('Sale completed successfully! Inventory quantities have been updated.');
+        setPendingPaymentMethod(null);
+        setCustomerInfo({ deliveryType: 'WALK_IN' }); // Reset customer info
+        setShowReceiptModal(true);
       } else {
-        setError(response.error || 'Failed to process sale');
+        console.error('Sale error:', response); // Debug log
+        setError(response.error || 'Failed to confirm sale');
       }
-    } catch {
-      setError('An error occurred while processing the sale');
+    } catch (error) {
+      console.error('Sale processing error:', error); // Debug log
+      setError('An error occurred while confirming the sale');
     } finally {
       setIsProcessing(false);
     }
@@ -186,6 +233,33 @@ export default function POSPage() {
           />
         </div>
       </div>
+      
+      {/* Receipt Modal */}
+      {showReceiptModal && lastSale && (
+        <ReceiptModal
+          sale={lastSale}
+          isOpen={showReceiptModal}
+          onClose={() => setShowReceiptModal(false)}
+          store={store}
+          onNewSale={() => setShowReceiptModal(false)}
+          brandStyles={brandStyles}
+        />
+      )}
+
+      {/* Customer Info Modal */}
+      <CustomerInfoModal
+        isOpen={showCustomerModal}
+        onClose={() => {
+          setShowCustomerModal(false);
+          setPendingPaymentMethod(null);
+        }}
+        onSave={(info) => {
+          setCustomerInfo(info);
+          setShowCustomerModal(false);
+          completeSale();
+        }}
+        initialData={customerInfo}
+      />
     </div>
   );
 }

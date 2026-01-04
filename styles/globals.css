@@ -1,48 +1,82 @@
 @import "tailwindcss";
 
-/* Design System Variables */
+/* Design System Variables - Professional Finance Theme */
 :root {
-  --primary: #0F766E;
-  --background: #F9FAFB;
+  --primary: #064E3B; /* Deep emerald green - trust, money, compliance */
+  --primary-hover: #065F46;
+  --primary-light: #10B981;
+  --accent: #0F766E; /* Muted teal accent */
+  --background: #FFFFFF;
   --surface: #FFFFFF;
-  --border: #E5E7EB;
-  --text-primary: #111827;
-  --text-secondary: #6B7280;
-  --success: #16A34A;
-  --warning: #F59E0B;
-  --error: #DC2626;
-  --info: #2563EB;
-  --active-bg: #EFF6FF;
-  --hover-bg: #F9FAFB;
+  --surface-alt: #F8FAFC; /* Soft gray alternative */
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --text-primary: #0F172A; /* Deep slate */
+  --text-secondary: #64748B; /* Medium slate */
+  --text-muted: #94A3B8; /* Light slate */
+  --success: #059669; /* Emerald success */
+  --warning: #D97706; /* Amber warning */
+  --error: #DC2626; /* Red error */
+  --info: #0284C7; /* Sky blue info */
+  --active-bg: #ECFDF5; /* Light emerald */
+  --hover-bg: #F8FAFC;
+  --emerald-50: #ECFDF5;
+  --emerald-100: #D1FAE5;
+  --emerald-700: #047857;
+  --emerald-800: #065F46;
+  --slate-50: #F8FAFC;
+  --slate-100: #F1F5F9;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1E293B;
+  --slate-900: #0F172A;
 }
 
 @theme inline {
-  --font-sans: system-ui, sans-serif;
+  --font-sans: 'Inter', 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--text-primary);
-  font-family: system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Professional Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.text-balance {
+  text-wrap: balance;
 }
 
 /* Component Classes */
 .page-title {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .section-header {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 16px;
+  letter-spacing: -0.01em;
 }
 
 .card {
@@ -56,34 +90,41 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   cursor: pointer;
-  gap: 4px;
+  gap: 6px;
+  letter-spacing: -0.01em;
 }
 
 .btn-primary {
   background-color: var(--primary);
   color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .btn-primary:hover {
-  background-color: #0D5D55;
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(6, 78, 59, 0.15);
 }
 
 .btn-secondary {
   background-color: var(--surface);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
 }
 
 .btn-secondary:hover {
   background-color: var(--hover-bg);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn-danger {
@@ -97,30 +138,64 @@ body {
 
 .input {
   width: 100%;
-  height: 40px;
+  height: 42px;
   padding: 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
   color: var(--text-primary);
   background-color: var(--surface);
-  transition: border-color 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-sans);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+  box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.1);
+}
+
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  word-wrap: break-word;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .card {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 24px;
+  }
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .sidebar-item-active {
   background-color: var(--active-bg);
   color: var(--primary);
   border-left: 3px solid var(--primary);
+  border-radius: 0 8px 8px 0;
 }
 
 .sidebar-item {
   color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  padding: 8px 12px;
 }
 
 .sidebar-item:hover {
@@ -130,18 +205,85 @@ body {
 
 .empty-state {
   text-align: center;
-  padding: 48px 24px;
+  padding: 64px 24px;
   color: var(--text-secondary);
 }
 
 .empty-state-title {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
 }
 
 .empty-state-description {
-  font-size: 14px;
-  margin-bottom: 24px;
+  font-size: 15px;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+
+/* Professional Utilities */
+.text-finance {
+  color: var(--primary);
+}
+
+.bg-finance {
+  background-color: var(--primary);
+}
+
+.border-finance {
+  border-color: var(--primary);
+}
+
+.shadow-professional {
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+}
+
+.shadow-professional-lg {
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Print Styles for Clean Receipt Printing */
+@media print {
+  /* Base print reset */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
+  /* Ensure proper page breaks */
+  @page {
+    margin: 0.5in;
+  }
+  
+  /* Hide scrollbars in print */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Clean typography for print */
+  body {
+    font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #000;
+    background: white;
+  }
+  
+  /* Remove unnecessary elements for print */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Ensure visibility of important content */
+  .print\:visible {
+    visibility: visible !important;
+    display: block !important;
+  }
+  
+  /* Hide navigation, headers, footers during print */
+  nav, header, footer, .navbar, .header, .footer {
+    display: none !important;
+  }
 }

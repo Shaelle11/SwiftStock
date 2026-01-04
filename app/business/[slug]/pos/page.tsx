@@ -23,6 +23,10 @@ interface SaleData {
   total: number;
   items: CartItem[];
   customerName?: string;
+  customerPhone?: string;
+  deliveryType?: 'WALK_IN' | 'DELIVERY';
+  deliveryAddress?: string;
+  deliveryPrice?: number;
   paymentMethod: string;
   createdAt: string;
 }
@@ -31,7 +35,7 @@ export default function BusinessPOS() {
   const { user, token } = useAuth();
   const { store } = useContext(AuthContext)!;
   const params = useParams();
-  const businessId = params?.businessId as string;
+  const businessSlug = params?.slug as string;
   const brandStyles = getStoreBrandStyles(store);
   
   // Cart and products state
@@ -55,10 +59,14 @@ export default function BusinessPOS() {
   const [error, setError] = useState<string | null>(null);
   const [lastSale, setLastSale] = useState<SaleData | null>(null);
   
+  // Cart drawer state
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  
   // Tax settings (default 7.5% VAT for Nigeria)
   const TAX_RATE = 0.075;
 
-  // Calculate totals
+  // Calculate totals and cart summary
+  const cartItemCount = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
   const tax = subtotal * TAX_RATE;
   const discount = 0; // Future feature
@@ -69,7 +77,7 @@ export default function BusinessPOS() {
     if (user && token) {
       loadProducts();
     }
-  }, [user, token, businessId]);
+  }, [user, token, businessSlug]);
 
   // Auto-focus search input
   useEffect(() => {
@@ -85,9 +93,13 @@ export default function BusinessPOS() {
     setLoading(true);
     try {
       const params: Record<string, string> = {
-        limit: '50', // Show more products for POS
-        storeId: businessId
+        limit: '50' // Show more products for POS
       };
+
+      // Add store ID if available from context
+      if (store?.id) {
+        params.storeId = store.id;
+      }
 
       if (search) params.search = search;
       if (category) params.category = category;
@@ -167,6 +179,11 @@ export default function BusinessPOS() {
       }
     });
 
+    // Auto-open cart drawer when first item is added
+    if (cart.length === 0) {
+      setIsCartDrawerOpen(true);
+    }
+
     // Clear any existing errors
     setError(null);
   };
@@ -220,10 +237,22 @@ export default function BusinessPOS() {
       return;
     }
     
+    // Close drawer on mobile when proceeding to checkout
+    setIsCartDrawerOpen(false);
     setShowPaymentModal(true);
   };
 
-  const processSale = async (paymentMethod: string, amountReceived?: number) => {
+  const processSale = async (
+    paymentMethod: string, 
+    deliveryInfo: {
+      customerName?: string;
+      customerPhone?: string;
+      deliveryType: 'WALK_IN' | 'DELIVERY';
+      deliveryAddress?: string;
+      deliveryPrice: number;
+    },
+    amountReceived?: number
+  ) => {
     if (cart.length === 0) return false;
 
     setIsProcessing(true);
@@ -233,29 +262,35 @@ export default function BusinessPOS() {
       const saleData = {
         items: cart.map(item => ({
           productId: item.productId,
-          quantity: item.quantity,
-          price: item.product.sellingPrice
+          quantity: item.quantity
         })),
-        paymentMethod,
-        customerId: null, // Future feature
-        customerName: customerName || 'Guest',
-        subtotal,
-        tax,
-        discount,
-        total,
-        amountReceived: amountReceived || total,
-        storeId: businessId
+        paymentMethod: paymentMethod.toLowerCase(),
+        customerId: null,
+        customerName: deliveryInfo.customerName || undefined,
+        customerPhone: deliveryInfo.customerPhone || undefined,
+        deliveryType: deliveryInfo.deliveryType,
+        deliveryAddress: deliveryInfo.deliveryAddress || undefined,
+        deliveryPrice: deliveryInfo.deliveryPrice,
+        deliveryStatus: deliveryInfo.deliveryType === 'DELIVERY' ? 'PENDING' : undefined,
+        discount: 0,
+        notes: deliveryInfo.customerName && deliveryInfo.customerName !== 'Guest' 
+          ? `Customer: ${deliveryInfo.customerName}` 
+          : undefined
       };
 
       const response = await api.post('/api/sales', saleData);
       
       if (response.success) {
-        // Create sale data for receipt
+        // Create sale data for receipt with delivery info
         const completedSale: SaleData = {
           id: (response.data as any)?.id || Date.now().toString(),
-          total,
+          total: total + deliveryInfo.deliveryPrice,
           items: [...cart],
-          customerName: customerName || 'Guest',
+          customerName: deliveryInfo.customerName || 'Guest',
+          customerPhone: deliveryInfo.customerPhone,
+          deliveryType: deliveryInfo.deliveryType,
+          deliveryAddress: deliveryInfo.deliveryAddress,
+          deliveryPrice: deliveryInfo.deliveryPrice,
           paymentMethod,
           createdAt: new Date().toISOString()
         };
@@ -294,6 +329,10 @@ export default function BusinessPOS() {
     setLastSale(null);
     setError(null);
     
+    // Reset customer information
+    setCustomerName('');
+    setCustomerSearch('');
+    
     // Auto-focus search for next sale
     setTimeout(() => {
       const searchInput = document.querySelector('#pos-search') as HTMLInputElement;
@@ -301,6 +340,14 @@ export default function BusinessPOS() {
         searchInput.focus();
       }
     }, 100);
+  };
+
+  const toggleCartDrawer = () => {
+    setIsCartDrawerOpen(!isCartDrawerOpen);
+  };
+
+  const closeCartDrawer = () => {
+    setIsCartDrawerOpen(false);
   };
 
   // Access control
@@ -318,32 +365,51 @@ export default function BusinessPOS() {
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* Business Context Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Point of Sale</h1>
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Store: {store?.name}</p>
-            <p className="text-sm text-gray-600">Cashier: {user.firstName} {user.lastName}</p>
+      <div className="bg-white border-b border-gray-200 px-4 lg:px-6 py-3 lg:py-4">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Point of Sale</h1>
+          
+          {/* Cart Toggle Button - Mobile/Tablet */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleCartDrawer}
+              className="lg:hidden relative p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              style={{ backgroundColor: brandStyles.primaryColor }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8h10l4-8H5.4m0 0L5 3H3m2 10v6a2 2 0 002 2h10a2 2 0 002-2v-6" />
+              </svg>
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
+            </button>
+            
+            <div className="text-right space-y-1">
+              <p className="text-xs lg:text-sm text-gray-600">Store: {store?.name}</p>
+              <p className="text-xs lg:text-sm text-gray-600">Cashier: {user.firstName} {user.lastName}</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-6 mt-4">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-4 lg:mx-6 mt-4">
           <div className="flex">
             <svg className="w-5 h-5 text-red-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700 text-sm lg:text-base">{error}</p>
           </div>
         </div>
       )}
 
       {/* Main POS Interface */}
-      <div className="flex-1 flex">
-        {/* Products Area - 65% */}
-        <div className="flex-1 p-6 overflow-hidden" style={{ width: '65%' }}>
+      <div className="flex-1 flex relative">
+        {/* Products Area - Full width when drawer closed */}
+        <div className="flex-1 p-4 lg:p-6 overflow-hidden">
           <POSProductGrid
             products={products}
             categories={categories}
@@ -356,27 +422,72 @@ export default function BusinessPOS() {
           />
         </div>
 
-        {/* Cart Area - 35% */}
-        <div className="bg-white border-l border-gray-200" style={{ width: '35%', minWidth: '400px' }}>
-          <POSCart
-            cart={cart}
-            subtotal={subtotal}
-            tax={tax}
-            total={total}
-            customerName={customerName}
-            customerSearch={customerSearch}
-            onUpdateQuantity={updateQuantity}
-            onRemoveItem={removeFromCart}
-            onClearCart={clearCart}
-            onCheckout={handleCheckout}
-            onHoldSale={holdSale}
-            onCustomerNameChange={setCustomerName}
-            onCustomerSearchChange={setCustomerSearch}
-            isProcessing={isProcessing}
-            brandStyles={brandStyles}
+        {/* Universal Cart Drawer - All screen sizes */}
+        <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${
+          isCartDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}>
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={closeCartDrawer}
           />
+          
+          {/* Drawer */}
+          <div className={`absolute right-0 top-0 h-full w-full sm:max-w-md lg:max-w-lg bg-white transform transition-transform duration-300 ease-in-out ${
+            isCartDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}>
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200">
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Current Sale</h2>
+              <button
+                onClick={closeCartDrawer}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Drawer Content */}
+            <div className="h-[calc(100%-64px)] lg:h-[calc(100%-80px)]">
+              <POSCart
+                cart={cart}
+                subtotal={subtotal}
+                tax={tax}
+                total={total}
+                customerName={customerName}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={removeFromCart}
+                onClearCart={clearCart}
+                onCheckout={handleCheckout}
+                onHoldSale={holdSale}
+                onCustomerNameChange={setCustomerName}
+                isProcessing={isProcessing}
+                brandStyles={brandStyles}
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Floating Cart Button - All screen sizes when drawer closed */}
+      {!isCartDrawerOpen && cartItemCount > 0 && (
+        <button
+          onClick={toggleCartDrawer}
+          className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-40 p-3 lg:p-4 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          style={{ backgroundColor: brandStyles.primaryColor }}
+        >
+          <div className="relative">
+            <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8h10l4-8H5.4m0 0L5 3H3m2 10v6a2 2 0 002 2h10a2 2 0 002-2v-6" />
+            </svg>
+            <span className="absolute -top-1 -right-1 lg:-top-2 lg:-right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 lg:w-5 lg:h-5 flex items-center justify-center font-medium">
+              {cartItemCount > 99 ? '99+' : cartItemCount}
+            </span>
+          </div>
+        </button>
+      )}
 
       {/* Modals */}
       <PaymentModal
@@ -395,6 +506,11 @@ export default function BusinessPOS() {
         store={store}
         onNewSale={startNewSale}
         brandStyles={brandStyles}
+        cashier={user ? {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userType: user.userType
+        } : undefined}
       />
     </div>
   );

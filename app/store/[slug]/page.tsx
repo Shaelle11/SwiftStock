@@ -3,6 +3,8 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { publicApi } from '@/lib/utils/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 import type { Store, Product, OrderItem } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -21,11 +23,12 @@ interface StoreData {
 export default function StorePage() {
   const params = useParams();
   const slug = params.slug as string;
+  const { user } = useAuth();
+  const { cart, addToCart: addToCartContext, getCartItemCount, getCartTotal, updateQuantity, removeFromCart: removeFromCartContext } = useCart();
   
   const [storeData, setStoreData] = useState<StoreData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -79,45 +82,25 @@ export default function StorePage() {
     }
   }, [slug, loadStoreData]);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.product.id === product.id);
-      
-      if (existingItem) {
-        return prevCart.map(item => 
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        return [...prevCart, { product, quantity }];
+  const addToCart = async (product: Product, quantity: number = 1) => {
+    if (user) {
+      // Use persistent cart for logged-in users
+      try {
+        await addToCartContext(product.id, quantity);
+        setShowCartDrawer(true);
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Failed to add item to cart. Please try again.');
       }
-    });
-    
-    // Auto-open cart drawer when item is added
-    setShowCartDrawer(true);
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.product.id !== productId));
-  };
-
-  const updateCartQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
+    } else {
+      // For guest users, redirect to login or show guest checkout
+      alert('Please log in to add items to cart for later purchase.');
     }
-    
-    setCart(prevCart => 
-      prevCart.map(item => 
-        item.product.id === productId
-          ? { ...item, quantity }
-          : item
-      )
-    );
   };
 
-  const cartTotal = cart.reduce((total, item) => total + (item.product.sellingPrice * item.quantity), 0);
+  // Cart functions will be handled by the cart drawer component when implemented
+
+  const cartTotal = getCartTotal();
 
   const handleGuestCheckout = async () => {
     if (!guestForm.firstName || !guestForm.lastName || !guestForm.email || !guestForm.phone) {
@@ -137,17 +120,17 @@ export default function StorePage() {
           phone: guestForm.phone,
           address: guestForm.address,
         },
-        items: cart.map(item => ({
-          productId: item.product.id,
+        items: cart?.items.map(item => ({
+          productId: item.productId,
           quantity: item.quantity,
-        })),
+        })) || [],
         paymentMethod: guestForm.paymentMethod,
       });
 
       if (response.success && response.data?.order) {
         setOrderNumber(response.data.order.orderNumber);
         setOrderComplete(true);
-        setCart([]);
+        // Note: For logged-in users, we'd clear the cart context here
         // Reset form
         setGuestForm({
           firstName: '',
@@ -169,7 +152,7 @@ export default function StorePage() {
   };
 
   const openCheckoutModal = () => {
-    if (cart.length === 0) return;
+    if (!cart?.items || cart.items.length === 0) return;
     setShowCartDrawer(false);
     setShowCheckoutModal(true);
   };
@@ -223,6 +206,17 @@ export default function StorePage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              {/* Back Button */}
+              <Link 
+                href="/explore" 
+                className="flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group"
+                title="Back to Explore"
+              >
+                <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Link>
+              
               {store.logoUrl && (
                 <Image 
                   src={getDirectImageUrl(store.logoUrl)} 
@@ -249,9 +243,9 @@ export default function StorePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m2.6 8L6 5H2m1 8h16m-7 4v8m0 0v-8m0 8h4m-4 0h-4" />
               </svg>
               <span>Cart</span>
-              {cart.length > 0 && (
+              {getCartItemCount() > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">
-                  {cart.length}
+                  {getCartItemCount()}
                 </span>
               )}
             </button>
@@ -343,7 +337,7 @@ export default function StorePage() {
       </main>
 
       {/* Cart Drawer */}
-      {showCartDrawer && cart.length > 0 && (
+      {showCartDrawer && cart?.items && cart.items.length > 0 && (
         <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-lg border-l z-50 overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -359,36 +353,42 @@ export default function StorePage() {
             </div>
             
             <div className="space-y-4 mb-6">
-              {cart.map((item) => (
-                <div key={item.product.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{item.product.name}</h4>
-                    <p className="text-sm text-gray-600">₦{item.product.sellingPrice.toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
+              {cart?.items && cart.items.length > 0 ? (
+                cart.items.map((item) => (
+                  <div key={item.productId} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{item.product.name}</h4>
+                      <p className="text-sm text-gray-600">₦{item.product.sellingPrice.toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        onClick={async () => await updateQuantity(item.productId, item.quantity - 1)}
+                        className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center text-gray-900 font-medium">{item.quantity}</span>
+                      <button 
+                        onClick={async () => await updateQuantity(item.productId, item.quantity + 1)}
+                        className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 font-bold"
+                        disabled={item.quantity >= item.product.stockQuantity}
+                      >
+                        +
+                      </button>
+                    </div>
                     <button 
-                      onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
-                      className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 font-bold"
+                      onClick={async () => await removeFromCartContext(item.productId)}
+                      className="text-red-600 hover:text-red-800 p-1 font-bold text-lg"
                     >
-                      -
-                    </button>
-                    <span className="w-8 text-center text-gray-900 font-medium">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
-                      className="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 font-bold"
-                      disabled={item.quantity >= item.product.stockQuantity}
-                    >
-                      +
+                      ×
                     </button>
                   </div>
-                  <button 
-                    onClick={() => removeFromCart(item.product.id)}
-                    className="text-red-600 hover:text-red-800 p-1 font-bold text-lg"
-                  >
-                    ×
-                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Your cart is empty</p>
                 </div>
-              ))}
+              )}
             </div>
             
             <div className="border-t-2 pt-6 bg-gray-50 -mx-6 px-6 mt-6">
@@ -456,7 +456,7 @@ export default function StorePage() {
                   <div className="mb-6">
                     <h3 className="font-semibold mb-3 text-gray-900">Order Summary</h3>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {cart.map((item) => (
+                      {cart?.items?.map((item) => (
                         <div key={item.product.id} className="flex justify-between items-center text-sm">
                           <span className="text-gray-900">{item.product.name} × {item.quantity}</span>
                           <span className="text-gray-900">₦{(item.product.sellingPrice * item.quantity).toLocaleString()}</span>
@@ -538,7 +538,7 @@ export default function StorePage() {
 
                     <button
                       onClick={handleGuestCheckout}
-                      disabled={isCheckingOut || cart.length === 0}
+                      disabled={isCheckingOut || !cart?.items || cart.items.length === 0}
                       className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ backgroundColor: store.accentColor }}
                     >

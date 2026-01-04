@@ -12,7 +12,15 @@ const productSchema = z.object({
   stockQuantity: z.number().int().min(0, 'Stock quantity must be a non-negative integer'),
   lowStockThreshold: z.number().int().min(0, 'Low stock threshold must be a non-negative integer'),
   barcode: z.string().optional(),
-  imageUrl: z.string().url('Image URL must be valid').optional().or(z.literal('').transform(() => undefined)),
+  imageUrl: z.union([
+    z.string().url('Image URL must be valid'),
+    z.literal(''),
+    z.undefined(),
+    z.null()
+  ]).optional().transform((val) => {
+    if (!val || val === '' || val === null) return undefined;
+    return val;
+  }),
 });
 
 // GET - Fetch all products for a store

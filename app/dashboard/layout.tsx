@@ -50,6 +50,16 @@ const navigation = [
     userTypes: ['business_owner', 'employee'] 
   },
   { 
+    name: 'Receipts', 
+    href: '/dashboard/receipts', 
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ), 
+    userTypes: ['business_owner', 'employee'] 
+  },
+  { 
     name: 'Customers', 
     href: '/dashboard/customers', 
     icon: (
@@ -58,6 +68,17 @@ const navigation = [
       </svg>
     ), 
     userTypes: ['business_owner'] 
+  },
+  { 
+    name: 'Abandoned Carts', 
+    href: '/dashboard/carts', 
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6H19M7 13v6a2 2 0 002 2h8.5M17 13v6a2 2 0 01-2 2H9.5M16 19a1 1 0 100-2 1 1 0 000 2zM7 19a1 1 0 100-2 1 1 0 000 2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9V7m0 0V5m0 2h2m-2 0H10" />
+      </svg>
+    ), 
+    userTypes: ['business_owner', 'employee'] 
   },
   { 
     name: 'Tax & Compliance', 

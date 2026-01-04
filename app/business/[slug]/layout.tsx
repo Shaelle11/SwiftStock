@@ -1,11 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import Footer from '@/components/layout/Footer';
+
+interface BusinessLayoutProps {
+  children: React.ReactNode;
+  params: Promise<{ slug: string }>;
+}
 
 interface CurrentBusiness {
   id: string;
@@ -17,11 +22,6 @@ interface UserBusiness {
   id: string;
   name: string;
   slug: string;
-}
-
-interface BusinessLayoutProps {
-  children: React.ReactNode;
-  params: Promise<{ slug: string }>;
 }
 
 const sidebarItems = [
@@ -228,8 +228,9 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
             });
           } else {
             console.error('Business not found in user\'s businesses:', resolvedParams.slug);
-            // Redirect to app page if business not found
-            router.push('/app');
+            console.error('Available businesses:', businessesData.stores?.map((s: any) => s.slug));
+            // Don't redirect immediately, show error message
+            // router.push('/app');
           }
         } else {
           console.error('Failed to fetch businesses:', businessesResponse.status, businessesResponse.statusText);
@@ -252,7 +253,7 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
   };
 
   // Show loading state initially
-  if (!user && isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -261,12 +262,6 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
         </div>
       </div>
     );
-  }
-
-  // Redirect to login if no user
-  if (!user) {
-    router.push('/auth/login');
-    return null;
   }
 
   return (
@@ -321,7 +316,7 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
                       <hr className="my-1" />
                       <button
                         onClick={() => router.push('/app/create-business')}
-                        className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                        className="w-full text-left px-4 py-2 text-sm text-teal-600 hover:bg-teal-50"
                       >
                         + Create New Business
                       </button>
@@ -350,7 +345,7 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
                             href={href}
                             className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
                               isActive
-                                ? 'bg-blue-50 text-teal-700 border-l-4 border-teal-700'
+                                ? 'bg-emerald-50 text-teal-700 border-l-4 border-teal-700'
                                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 focus:bg-gray-50'
                             }`}
                             scroll={false}
@@ -462,7 +457,7 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
                       <hr className="my-1" />
                       <button
                         onClick={() => router.push('/app/create-business')}
-                        className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
+                        className="w-full text-left px-4 py-2 text-sm text-teal-600 hover:bg-teal-50"
                       >
                         + Create New Business
                       </button>
@@ -489,14 +484,14 @@ export default function BusinessLayout({ children, params }: BusinessLayoutProps
                           key={item.name}
                           href={href}
                           onClick={() => setSidebarOpen(false)}
-                          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
                             isActive
-                              ? 'bg-blue-100 text-blue-600 shadow-sm'
+                              ? 'bg-emerald-50 text-teal-700 shadow-sm'
                               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 focus:bg-gray-50'
                           }`}
                           scroll={false}
                         >
-                          <span className={`mr-3 ${isActive ? 'text-blue-600' : 'text-gray-400'}`}>
+                          <span className={`mr-3 ${isActive ? 'text-teal-700' : 'text-gray-400'}`}>
                             {item.icon}
                           </span>
                           {item.name}

@@ -156,7 +156,8 @@ export default function CartSummary({
         >
           <option value="cash">Cash</option>
           <option value="card">Card</option>
-          <option value="mobile">Mobile Payment</option>
+          <option value="transfer">Transfer</option>
+          <option value="other">Other</option>
         </select>
       </div>
 
@@ -167,19 +168,24 @@ export default function CartSummary({
         </div>
       )}
 
-      {/* Process Sale Button */}
+      {/* Confirm Receipt Button */}
       <button
         onClick={handleProcessSale}
         disabled={cart.length === 0 || isProcessing}
-        className="btn btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
       >
         {isProcessing ? (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            Processing...
+            Confirming...
           </div>
         ) : (
-          `Complete Sale • ${formatCurrency(total)}`
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Confirm Payment & Generate Receipt • {formatCurrency(total)}
+          </div>
         )}
       </button>
 
@@ -226,14 +232,26 @@ export default function CartSummary({
           </div>
         )}
 
-        {/* Process Sale Button */}
+        {/* Confirm Receipt Button */}
         <button
           onClick={handleProcessSale}
           disabled={cart.length === 0 || isProcessing}
-          className="w-full text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full text-white py-3 px-4 rounded-lg font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           style={brandStyles?.buttonStyle || { backgroundColor: '#3B82F6', borderColor: '#3B82F6' }}
         >
-          {isProcessing ? 'Processing...' : `Process Sale ${total > 0 ? formatCurrency(total) : ''}`}
+          {isProcessing ? (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Confirming...
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Confirm Payment & Generate Receipt • {formatCurrency(total)}
+            </div>
+          )}
         </button>
       </div>
     </div>

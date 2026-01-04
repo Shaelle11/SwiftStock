@@ -145,9 +145,9 @@ export default function ProductModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
+  const saveProduct = async () => {
     if (!validateForm()) {
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -162,7 +162,7 @@ export default function ProductModal({
         stockQuantity: parseInt(formData.stockQuantity),
         lowStockThreshold: parseInt(formData.lowStockThreshold),
         barcode: formData.barcode || generateSKU(),
-        imageUrl: formData.imageUrl || null,
+        imageUrl: formData.imageUrl.trim() || undefined,
         storeId: storeId
       };
 
@@ -176,23 +176,36 @@ export default function ProductModal({
       }
 
       if (response.success) {
-        onSave();
-        handleClose();
+        onSave(); // Refresh the product list
+        return true;
       } else {
         alert(response.message || 'Failed to save product');
+        return false;
       }
     } catch (error) {
       console.error('Error saving product:', error);
       alert('An error occurred while saving the product');
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSave = async () => {
+    const success = await saveProduct();
+    if (success) {
+      handleClose();
+    }
+  };
+
   const handleSaveAndAddAnother = async () => {
-    await handleSave();
-    if (!product) { // Only reset form if creating new product
-      setFormData(initialFormData);
+    if (!product) { // Only available for creating new products
+      const success = await saveProduct();
+      if (success) {
+        // Clear the form for the next product
+        setFormData(initialFormData);
+        setErrors({});
+      }
     }
   };
 
