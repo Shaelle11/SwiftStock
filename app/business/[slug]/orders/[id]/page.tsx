@@ -143,11 +143,75 @@ export default function OrderDetail() {
   };
 
   const handlePrintReceipt = () => {
-    // Create a new window with just the receipt content using the same format as POS
+    // Create a new window with just the receipt content
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     
     if (!printWindow) {
       alert('Please allow popups to print receipts');
+      return;
+    }
+
+    // Simple receipt HTML that avoids complex template literals
+    const receiptNumber = sale.invoiceNumber;
+    const storeName = sale.store?.businessName || sale.store?.name || 'Your Store';
+    const storeAddress = sale.store?.address || '';
+    const storePhone = sale.store?.phone || '';
+    
+    printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Receipt - ${receiptNumber}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+    .store-name { font-size: 24px; font-weight: bold; margin-bottom: 8px; }
+    .receipt-info, .items, .totals { margin-bottom: 20px; }
+    .item-row, .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .total-row.final { font-weight: bold; font-size: 16px; border-top: 1px solid #000; padding-top: 10px; }
+    .footer { text-align: center; border-top: 1px solid #000; padding-top: 15px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="store-name">${storeName}</div>
+    <div>${storeAddress}</div>
+    <div>${storePhone}</div>
+  </div>
+  <div class="receipt-info">
+    <p><strong>Receipt:</strong> ${receiptNumber}</p>
+    <p><strong>Date:</strong> ${formatDateTime(sale.createdAt)}</p>
+    <p><strong>Customer:</strong> ${sale.customerName || 'Guest Customer'}</p>
+    <p><strong>Payment:</strong> ${sale.paymentMethod}</p>
+  </div>
+  <div class="items">
+    <h3>Items:</h3>
+    ${sale.items.map(item => 
+      `<div class="item-row">
+        <span>${item.productName} (${formatCurrency(item.unitPrice)} × ${item.quantity})</span>
+        <span>${formatCurrency(item.subtotal)}</span>
+      </div>`
+    ).join('')}
+  </div>
+  <div class="totals">
+    <div class="total-row"><span>Subtotal:</span><span>${formatCurrency(sale.subtotal)}</span></div>
+    <div class="total-row"><span>Tax:</span><span>${formatCurrency(sale.tax)}</span></div>
+    ${sale.discount > 0 ? `<div class="total-row"><span>Discount:</span><span>-${formatCurrency(sale.discount)}</span></div>` : ''}
+    <div class="total-row final"><span>TOTAL:</span><span>${formatCurrency(sale.total)}</span></div>
+  </div>
+  <div class="footer">
+    <p><strong>Thank you for your business!</strong></p>
+    <p>Receipt generated on ${formatDateTime(sale.createdAt)}</p>
+  </div>
+</body>
+</html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    setTimeout(() => printWindow.close(), 100);
+  };
       return;
     }
 
@@ -548,13 +612,6 @@ export default function OrderDetail() {
       setTimeout(() => {
         printWindow.close();
       }, 100);
-    };
-  const handleBack = () => {
-    router.push(`/business/${businessSlug}/orders`);
-  };
-
-  const handlePrintReceipt = () => {
-    window.print();
   };
 
   const getPaymentMethodLabel = (method: string) => {
