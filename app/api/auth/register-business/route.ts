@@ -16,10 +16,42 @@ const businessRegistrationSchema = z.object({
   
   // Business details
   businessName: z.string().min(1, 'Business name is required'),
+  businessType: z.string().optional(),
   businessDescription: z.string().optional(),
   businessAddress: z.string().min(1, 'Business address is required'),
   businessPhone: z.string().min(1, 'Business phone is required'),
   businessEmail: z.string().email('Valid business email is required'),
+  
+  // Location
+  country: z.string().default('Nigeria'),
+  state: z.string().min(1, 'State is required'),
+  city: z.string().min(1, 'City is required'),
+  
+  // Registration details
+  registrationStatus: z.string().optional(),
+  cacNumber: z.string().optional(),
+  tinNumber: z.string().optional(),
+  businessRegNumber: z.string().optional(),
+  businessLicense: z.string().optional(),
+  
+  // Store setup
+  slug: z.string().min(1, 'Store URL slug is required'),
+  logoUrl: z.string().optional(),
+  primaryColor: z.string().default('#3B82F6'),
+  allowGuestCheckout: z.boolean().default(true),
+  
+  // Tax settings
+  vatRegistered: z.boolean().default(false),
+  chargeVat: z.boolean().default(false),
+  vatRate: z.number().default(7.5),
+  taxIdNumber: z.string().optional(),
+  autoCalculateTax: z.boolean().default(true),
+  
+  // Inventory settings
+  inventoryType: z.string().default('physical'),
+  trackQuantities: z.boolean().default(true),
+  currency: z.string().default('NGN'),
+  enableLowStockAlerts: z.boolean().default(true),
 });
 
 export async function POST(request: NextRequest) {
@@ -43,10 +75,32 @@ export async function POST(request: NextRequest) {
       email,
       password,
       businessName,
+      businessType,
       businessDescription,
       businessAddress,
       businessPhone,
       businessEmail,
+      country,
+      state,
+      city,
+      registrationStatus,
+      cacNumber,
+      tinNumber,
+      businessRegNumber,
+      businessLicense,
+      slug: preferredSlug,
+      logoUrl,
+      primaryColor,
+      allowGuestCheckout,
+      vatRegistered,
+      chargeVat,
+      vatRate,
+      taxIdNumber,
+      autoCalculateTax,
+      inventoryType,
+      trackQuantities,
+      currency,
+      enableLowStockAlerts,
     } = validationResult.data;
 
     // Check if user already exists
@@ -62,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique store slug
-    const baseSlug = businessName.toLowerCase()
+    const baseSlug = preferredSlug || businessName.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
@@ -89,7 +143,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(userResult, { status: 400 });
     }
 
-    // Create the store
+    // Create the store with all new fields
     const store = await prisma.store.create({
       data: {
         name: businessName,
@@ -99,6 +153,26 @@ export async function POST(request: NextRequest) {
         email: businessEmail,
         slug: storeSlug,
         ownerId: userResult.user.id,
+        country,
+        state,
+        cacNumber,
+        tin: tinNumber,
+        vatRegistered,
+        currency,
+        logoUrl,
+        primaryColor,
+      },
+    });
+
+    // Create store settings with tax configuration
+    await prisma.storeSettings.create({
+      data: {
+        storeId: store.id,
+        vatEnabled: chargeVat,
+        vatRate: vatRegistered ? vatRate / 100 : 0, // Convert percentage to decimal
+        taxIdNumber,
+        businessRegNumber,
+        businessType,
       },
     });
 

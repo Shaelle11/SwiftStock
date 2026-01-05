@@ -171,7 +171,7 @@ export default function BusinessDashboard() {
             product.stockQuantity <= product.lowStockThreshold
           )
           .slice(0, 5)
-          .map((product: ProductData) => ({
+          .map((product: Product) => ({
             id: product.id,
             name: product.name,
             currentStock: product.stockQuantity,

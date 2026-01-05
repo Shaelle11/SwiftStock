@@ -56,12 +56,6 @@ export default function ReceiptsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    if (user && token) {
-      loadReceipts();
-    }
-  }, [user, token, loadReceipts]);
-
   const loadReceipts = useCallback(async () => {
     if (!token) return;
     
@@ -103,6 +97,12 @@ export default function ReceiptsPage() {
       setLoading(false);
     }
   }, [token, currentPage, searchQuery, paymentMethodFilter, dateRangeFilter]);
+
+  useEffect(() => {
+    if (user && token) {
+      loadReceipts();
+    }
+  }, [user, token, loadReceipts]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -355,7 +355,18 @@ export default function ReceiptsPage() {
               product: {
                 id: item.id,
                 name: item.productName,
-                sellingPrice: item.unitPrice
+                description: '',
+                category: '',
+                costPrice: 0,
+                sellingPrice: item.unitPrice,
+                stockQuantity: 0,
+                lowStockThreshold: 0,
+                barcode: '',
+                imageUrl: '',
+                isActive: true,
+                storeId: '',
+                createdAt: new Date(),
+                updatedAt: new Date()
               },
               quantity: item.quantity,
               subtotal: item.subtotal

@@ -15,13 +15,41 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { name, description, address, phone, email, primaryColor, logoUrl } = body;
+    const { 
+      name, 
+      description, 
+      businessType,
+      address,
+      country,
+      state, 
+      city,
+      phone, 
+      email, 
+      primaryColor, 
+      logoUrl,
+      slug,
+      registrationStatus,
+      cacNumber,
+      tinNumber,
+      businessRegNumber,
+      businessLicense,
+      vatRegistered,
+      chargeVat,
+      vatRate,
+      taxIdNumber,
+      autoCalculateTax,
+      inventoryType,
+      trackQuantities,
+      currency,
+      enableLowStockAlerts,
+      allowGuestCheckout
+    } = body;
 
     // Validate required fields
-    if (!name || !address || !phone || !email) {
+    if (!name || !address || !phone || !email || !slug || !state || !city) {
       return NextResponse.json({
         success: false,
-        message: 'Missing required fields: name, address, phone, email'
+        message: 'Missing required fields: name, address, phone, email, slug, state, city'
       }, { status: 400 });
     }
 
@@ -31,19 +59,45 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingStore) {
-      // Update the existing store instead of creating a new one
+      // Update the existing store with all new fields
       const updatedStore = await prisma.store.update({
         where: { id: existingStore.id },
         data: {
           name,
           description: description || null,
           address,
+          country: country || 'Nigeria',
+          state,
           phone,
           email,
           primaryColor: primaryColor || '#3B82F6',
           logoUrl: logoUrl || null,
-          slug: existingStore.slug, // Keep existing slug
+          slug: slug || existingStore.slug,
+          cacNumber: cacNumber || null,
+          tin: tinNumber || null,
+          vatRegistered: vatRegistered || false,
+          currency: currency || 'NGN',
           isActive: true
+        }
+      });
+
+      // Update or create store settings
+      await prisma.storeSettings.upsert({
+        where: { storeId: existingStore.id },
+        update: {
+          vatEnabled: chargeVat || false,
+          vatRate: (vatRegistered && vatRate) ? vatRate / 100 : 0.075, // Convert percentage to decimal
+          taxIdNumber: taxIdNumber || null,
+          businessRegNumber: businessRegNumber || null,
+          businessType: businessType || null,
+        },
+        create: {
+          storeId: existingStore.id,
+          vatEnabled: chargeVat || false,
+          vatRate: (vatRegistered && vatRate) ? vatRate / 100 : 0.075,
+          taxIdNumber: taxIdNumber || null,
+          businessRegNumber: businessRegNumber || null,
+          businessType: businessType || null,
         }
       });
 
@@ -59,30 +113,58 @@ export async function POST(request: NextRequest) {
           phone: updatedStore.phone,
           email: updatedStore.email,
           primaryColor: updatedStore.primaryColor,
-          logoUrl: updatedStore.logoUrl
+          logoUrl: updatedStore.logoUrl,
+          vatRegistered: updatedStore.vatRegistered,
+          cacNumber: updatedStore.cacNumber,
+          tin: updatedStore.tin,
+          state: updatedStore.state,
+          country: updatedStore.country
         }
       });
     }
 
-    // Generate unique slug
-    const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-    const timestamp = Date.now();
-    const slug = `${baseSlug}-${timestamp}`;
+    // Generate unique slug for new store
+    let storeSlug = slug;
+    let counter = 1;
+    
+    // Ensure slug is unique
+    while (await prisma.store.findUnique({ where: { slug: storeSlug } })) {
+      storeSlug = `${slug}-${counter}`;
+      counter++;
+    }
 
-    // Create a new store
+    // Create a new store with all comprehensive fields
     const store = await prisma.store.create({
       data: {
         name,
         description: description || null,
         address,
+        country: country || 'Nigeria',
+        state,
         phone,
         email,
         primaryColor: primaryColor || '#3B82F6',
         logoUrl: logoUrl || null,
-        slug,
+        slug: storeSlug,
         ownerId: user.id,
+        cacNumber: cacNumber || null,
+        tin: tinNumber || null,
+        vatRegistered: vatRegistered || false,
+        currency: currency || 'NGN',
         isActive: true
       },
+    });
+
+    // Create store settings for new store
+    await prisma.storeSettings.create({
+      data: {
+        storeId: store.id,
+        vatEnabled: chargeVat || false,
+        vatRate: (vatRegistered && vatRate) ? vatRate / 100 : 0.075, // Convert percentage to decimal
+        taxIdNumber: taxIdNumber || null,
+        businessRegNumber: businessRegNumber || null,
+        businessType: businessType || null,
+      }
     });
 
     // Update the user with the new store ID if they don't have one
@@ -109,7 +191,14 @@ export async function POST(request: NextRequest) {
         phone: store.phone,
         email: store.email,
         primaryColor: store.primaryColor,
-        logoUrl: store.logoUrl
+        logoUrl: store.logoUrl,
+        vatRegistered: store.vatRegistered,
+        cacNumber: store.cacNumber,
+        tin: store.tin,
+        state: store.state,
+        country: store.country,
+        currency: store.currency,
+        publicUrl: `https://swiftstock.vercel.app/store/${store.slug}`
       }
     });
 

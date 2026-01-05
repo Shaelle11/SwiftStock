@@ -20,6 +20,8 @@ interface BusinessFormData {
   registrationStatus: string;
   cacNumber?: string;
   tinNumber?: string;
+  businessRegNumber?: string;
+  businessLicense?: string;
 
   // Step 3: Inventory & Sales Setup
   inventoryType: string;
@@ -32,16 +34,21 @@ interface BusinessFormData {
   storeVisibility: string;
   slug: string;
   allowGuestCheckout: boolean;
+  customDomain?: string;
+  storeUrl?: string;
 
   // Step 5: Tax & Compliance
   chargeVat: boolean;
   vatRate: number;
+  vatRegistered: boolean;
+  taxIdNumber?: string;
   autoCalculateTax: boolean;
   
   // Additional fields
   phone: string;
   email: string;
   primaryColor: string;
+  logoUrl?: string;
 }
 
 const businessTypes = [
@@ -96,6 +103,7 @@ export default function CreateBusinessPage() {
     // Step 5
     chargeVat: false,
     vatRate: 7.5,
+    vatRegistered: false,
     autoCalculateTax: true,
     // Additional
     phone: '',
@@ -181,16 +189,45 @@ export default function CreateBusinessPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
+          // Basic business info
           name: formData.name,
           description: formData.description,
+          businessType: formData.businessType,
+          
+          // Location & Legal
+          country: formData.country,
+          state: formData.state,
+          city: formData.city,
           address: formData.address,
+          registrationStatus: formData.registrationStatus,
+          cacNumber: formData.cacNumber,
+          tinNumber: formData.tinNumber,
+          businessRegNumber: formData.businessRegNumber,
+          businessLicense: formData.businessLicense,
+          
+          // Contact
           phone: formData.phone,
           email: formData.email,
-          primaryColor: formData.primaryColor,
-          businessType: formData.businessType,
+          
+          // Store setup
           slug: formData.slug,
+          logoUrl: formData.logoUrl,
+          primaryColor: formData.primaryColor,
+          allowGuestCheckout: formData.allowGuestCheckout,
           isPublic: false,
-          // Add other relevant fields to your API
+          
+          // Tax settings
+          vatRegistered: formData.vatRegistered,
+          chargeVat: formData.chargeVat,
+          vatRate: formData.vatRate,
+          taxIdNumber: formData.taxIdNumber,
+          autoCalculateTax: formData.autoCalculateTax,
+          
+          // Inventory settings
+          inventoryType: formData.inventoryType,
+          trackQuantities: formData.trackQuantities,
+          currency: formData.currency,
+          enableLowStockAlerts: formData.enableLowStockAlerts,
         }),
       });
 
@@ -375,26 +412,62 @@ export default function CreateBusinessPage() {
             </div>
 
             {formData.registrationStatus === 'registered' && (
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">CAC Registration Number</label>
-                  <input
-                    type="text"
-                    value={formData.cacNumber || ''}
-                    onChange={(e) => handleChange('cacNumber', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                    placeholder="RC number"
-                  />
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-medium text-green-900 mb-2">Business Registration Details</h4>
+                  <p className="text-sm text-green-800">
+                    Please provide your business registration information for compliance and tax purposes.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">TIN Number</label>
-                  <input
-                    type="text"
-                    value={formData.tinNumber || ''}
-                    onChange={(e) => handleChange('tinNumber', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                    placeholder="Tax identification number"
-                  />
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">CAC Registration Number</label>
+                    <input
+                      type="text"
+                      value={formData.cacNumber || ''}
+                      onChange={(e) => handleChange('cacNumber', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                      placeholder="RC number (e.g., RC123456)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Corporate Affairs Commission number</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">TIN Number</label>
+                    <input
+                      type="text"
+                      value={formData.tinNumber || ''}
+                      onChange={(e) => handleChange('tinNumber', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                      placeholder="Tax Identification Number"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Required for tax reporting</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Business Registration Number</label>
+                    <input
+                      type="text"
+                      value={formData.businessRegNumber || ''}
+                      onChange={(e) => handleChange('businessRegNumber', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                      placeholder="BN number (for business names)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Business Name registration number (if applicable)</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Business License Number</label>
+                    <input
+                      type="text"
+                      value={formData.businessLicense || ''}
+                      onChange={(e) => handleChange('businessLicense', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                      placeholder="License number (if required)"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Industry-specific license (optional)</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -501,7 +574,7 @@ export default function CreateBusinessPage() {
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Store Setup</h2>
-              <p className="text-gray-600">Configure your store URL and basic settings</p>
+              <p className="text-gray-600">Configure your online store and branding</p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -518,28 +591,63 @@ export default function CreateBusinessPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Store URL Slug *</label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-                  swiftstock.com/store/
-                </span>
-                <input
-                  type="text"
-                  required
-                  value={formData.slug}
-                  onChange={(e) => handleChange('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                  placeholder="your-business-name"
-                />
-              </div>
-              {formData.slug && (
-                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <strong>Preview:</strong> swiftstock.com/store/{formData.slug}
-                  </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Store URL Slug *</label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                    swiftstock.vercel.app/store/
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.slug}
+                    onChange={(e) => handleChange('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    placeholder="your-business-name"
+                  />
                 </div>
-              )}
+                {formData.slug && (
+                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      <strong>Preview:</strong> swiftstock.vercel.app/store/{formData.slug}
+                    </p>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">This will be your public store URL</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Store Logo URL</label>
+                <input
+                  type="url"
+                  value={formData.logoUrl || ''}
+                  onChange={(e) => handleChange('logoUrl', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                  placeholder="https://example.com/logo.png"
+                />
+                <p className="text-xs text-gray-500 mt-1">Upload your logo to a cloud service and paste the URL here</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Brand Primary Color</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={formData.primaryColor}
+                    onChange={(e) => handleChange('primaryColor', e.target.value)}
+                    className="w-12 h-12 border border-gray-300 rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={formData.primaryColor}
+                    onChange={(e) => handleChange('primaryColor', e.target.value)}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                    placeholder="#3B82F6"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">This color will be used for buttons and highlights in your store</p>
+              </div>
             </div>
 
             <div>
@@ -562,65 +670,129 @@ export default function CreateBusinessPage() {
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Tax & Compliance</h2>
-              <p className="text-gray-600">Prepare for tax filing and reporting</p>
+              <p className="text-gray-600">Configure your tax settings and compliance requirements</p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> These settings help you generate tax-ready reports later.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Do you charge VAT?</label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    checked={formData.chargeVat === true}
-                    onChange={() => handleChange('chargeVat', true)}
-                    className="mr-3"
-                  />
-                  <span className="text-gray-900">Yes - I charge VAT on my sales</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    checked={formData.chargeVat === false}
-                    onChange={() => handleChange('chargeVat', false)}
-                    className="mr-3"
-                  />
-                  <span className="text-gray-700">No, I don&apos;t charge VAT</span>
-                </label>
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <div>
+                  <h4 className="font-medium text-blue-900 mb-1">Tax Compliance</h4>
+                  <p className="text-sm text-blue-800">
+                    Set up your tax configuration to ensure compliance with local tax regulations and generate proper reports.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {formData.chargeVat && (
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">VAT Rate (%)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.vatRate}
-                    onChange={(e) => handleChange('vatRate', parseFloat(e.target.value))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Default: 7.5% (Nigerian VAT rate)</p>
-                </div>
-                <div className="flex items-center">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">VAT Registration Status</label>
+                <div className="space-y-2">
                   <label className="flex items-center">
                     <input
-                      type="checkbox"
-                      checked={formData.autoCalculateTax}
-                      onChange={(e) => handleChange('autoCalculateTax', e.target.checked)}
+                      type="radio"
+                      checked={formData.vatRegistered === true}
+                      onChange={() => {
+                        handleChange('vatRegistered', true);
+                        handleChange('chargeVat', true);
+                      }}
                       className="mr-3"
                     />
-                    <span className="text-sm font-medium text-gray-700">Auto-calculate tax on sales</span>
+                    <span className="text-gray-900">Registered for VAT</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      checked={formData.vatRegistered === false}
+                      onChange={() => {
+                        handleChange('vatRegistered', false);
+                        handleChange('chargeVat', false);
+                      }}
+                      className="mr-3"
+                    />
+                    <span className="text-gray-700">Not registered for VAT</span>
                   </label>
                 </div>
               </div>
-            )}
+
+              {formData.vatRegistered && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+                  <h4 className="font-medium text-green-900">VAT Configuration</h4>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">VAT Rate (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        value={formData.vatRate}
+                        onChange={(e) => handleChange('vatRate', parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Standard Nigerian VAT rate is 7.5%</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tax ID Number</label>
+                      <input
+                        type="text"
+                        value={formData.taxIdNumber || ''}
+                        onChange={(e) => handleChange('taxIdNumber', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+                        placeholder="VAT registration number"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Your official VAT registration number</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.chargeVat}
+                        onChange={(e) => handleChange('chargeVat', e.target.checked)}
+                        className="mr-3"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Charge VAT on all sales</span>
+                    </label>
+                    <p className="text-sm text-gray-500 mt-1 ml-6">VAT will be automatically added to product prices</p>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.autoCalculateTax}
+                        onChange={(e) => handleChange('autoCalculateTax', e.target.checked)}
+                        className="mr-3"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Auto-calculate tax on sales</span>
+                    </label>
+                    <p className="text-sm text-gray-500 mt-1 ml-6">Automatically calculate and track tax amounts</p>
+                  </div>
+                </div>
+              )}
+
+              {!formData.vatRegistered && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-gray-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-1">No VAT Registration</h4>
+                      <p className="text-sm text-gray-600">
+                        Your sales will not include VAT charges. You can register for VAT later and update these settings.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center">
@@ -639,7 +811,7 @@ export default function CreateBusinessPage() {
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Contact Information</h2>
-              <p className="text-gray-600">How customers can reach you</p>
+              <p className="text-gray-600">How customers and partners can reach you</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -653,6 +825,7 @@ export default function CreateBusinessPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                   placeholder="business@example.com"
                 />
+                <p className="text-xs text-gray-500 mt-1">This will be used for customer communications and receipts</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
@@ -664,19 +837,21 @@ export default function CreateBusinessPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                   placeholder="+234 800 000 0000"
                 />
+                <p className="text-xs text-gray-500 mt-1">Customer support and delivery contact</p>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Brand Color</label>
-              <div className="flex items-center space-x-3">
-                <input
-                  type="color"
-                  value={formData.primaryColor}
-                  onChange={(e) => handleChange('primaryColor', e.target.value)}
-                  className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
-                />
-                <span className="text-sm text-gray-600">Choose your brand color</span>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="font-medium text-blue-900 mb-1">Almost Ready!</h4>
+                  <p className="text-sm text-blue-800">
+                    Once you complete this step, we'll create your business account and you can start adding products to your inventory.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -719,7 +894,7 @@ export default function CreateBusinessPage() {
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">URL</dt>
-                      <dd className="text-sm text-gray-900">swiftstock.com/store/{formData.slug}</dd>
+                      <dd className="text-sm text-gray-900">swiftstock.vercel.app/store/{formData.slug}</dd>
                     </div>
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Inventory Type</dt>

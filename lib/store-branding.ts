@@ -8,6 +8,7 @@ export interface StoreData {
   email: string;
   logoUrl?: string;
   primaryColor: string;
+  accentColor?: string;
 }
 
 /**
@@ -210,9 +211,11 @@ export function downloadBrandedFile(
  */
 export function getStoreBrandStyles(store: StoreData | null) {
   const primaryColor = store?.primaryColor || '#3B82F6';
+  const accentColor = store?.accentColor || '#10B981';
   
   return {
     primaryColor,
+    accentColor,
     buttonStyle: {
       backgroundColor: primaryColor,
       borderColor: primaryColor,

@@ -66,7 +66,6 @@ export default function OrderDetail() {
   const router = useRouter();
   const orderId = params?.id as string;
   const businessSlug = params?.slug as string;
-  // Store branding styles can be added when needed
 
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,10 +165,7 @@ export default function OrderDetail() {
   };
 
   const handlePrintReceipt = () => {
-    if (!sale) {
-      alert('No sale data available to print');
-      return;
-    }
+    if (!sale) return;
 
     // Create a new window with just the receipt content
     const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -242,25 +238,26 @@ export default function OrderDetail() {
   };
 
   const getPaymentMethodLabel = (method: string) => {
-    const methods = {
-      CASH: 'Cash',
-      CARD: 'Card',
-      TRANSFER: 'Transfer',
-      OTHER: 'Other'
-    };
-    return methods[method as keyof typeof methods] || method;
+    switch (method) {
+      case 'CASH': return 'Cash';
+      case 'CARD': return 'Card';
+      case 'TRANSFER': return 'Bank Transfer';
+      case 'POS': return 'POS';
+      default: return method;
+    }
   };
 
-  const getDeliveryStatusLabel = (status?: string) => {
-    const normalizedStatus = status?.toLowerCase();
+  const getDeliveryStatusLabel = (status: string | undefined | null) => {
     const statuses = {
-      pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800' },
-      'in-transit': { label: 'With Rider', className: 'bg-blue-100 text-blue-800' },
-      'in_transit': { label: 'With Rider', className: 'bg-blue-100 text-blue-800' },
-      'out_for_delivery': { label: 'Out for Delivery', className: 'bg-blue-100 text-blue-800' },
+      pending: { label: 'Pending Pickup', className: 'bg-yellow-100 text-yellow-800' },
+      'in-transit': { label: 'Parcel Given to Rider', className: 'bg-blue-100 text-blue-800' },
+      'in_transit': { label: 'Parcel Given to Rider', className: 'bg-blue-100 text-blue-800' },
+      'out-for-delivery': { label: 'Out for Delivery', className: 'bg-indigo-100 text-indigo-800' },
+      'out_for_delivery': { label: 'Out for Delivery', className: 'bg-indigo-100 text-indigo-800' },
       delivered: { label: 'Delivered', className: 'bg-green-100 text-green-800' },
-      failed: { label: 'Failed', className: 'bg-red-100 text-red-800' }
+      failed: { label: 'Delivery Failed', className: 'bg-red-100 text-red-800' }
     };
+    const normalizedStatus = status?.toLowerCase();
     return statuses[normalizedStatus as keyof typeof statuses] || { label: normalizedStatus || 'Unknown', className: 'bg-gray-100 text-gray-800' };
   };
 
@@ -374,16 +371,8 @@ export default function OrderDetail() {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-4xl mx-auto">
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Orders
-          </button>
-          
           <div className="text-center py-8">
-            <p className="text-red-600">{error || 'Order not found'}</p>
+            <p className="text-red-600 mb-4">{error || 'Order not found'}</p>
             <button
               onClick={handleBack}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -405,14 +394,14 @@ export default function OrderDetail() {
             onClick={handleBack}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
             Back to Orders
           </button>
           
           <div className="flex gap-3">
             <button
               onClick={handlePrintReceipt}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
             >
               <Download className="w-4 h-4" />
               Print Receipt
@@ -421,117 +410,52 @@ export default function OrderDetail() {
         </div>
 
         {/* Receipt Content */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden print:shadow-none print:rounded-none print:overflow-visible" id="receipt-content">
-          {/* Receipt Header */}
-          <div className="bg-gray-50 px-6 py-4 border-b print:bg-white print:border-b-2 print:border-black print:text-center print:mb-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between print:block">
-              <div className="print:mb-4">
-                <h1 className="text-2xl font-bold text-gray-900 print:text-xl print:mb-2">
-                  {sale.store?.businessName || sale.store?.name || 'Receipt'}
-                </h1>
-                <p className="text-gray-600 mt-1 print:text-black print:text-sm">
-                  Receipt #{sale.invoiceNumber}
-                </p>
-                <p className="text-gray-600 mt-1 print:text-black print:text-sm">
-                  {formatDateTime(sale.createdAt)}
-                </p>
-                {sale?.deliveryType?.toLowerCase() === 'delivery' && (
-                  <p className="text-green-600 font-medium mt-1 print:text-black print:text-sm">
-                    {sale.deliveryStatus === 'delivered' 
-                      ? `✓ Delivered ${sale.deliveredAt ? formatDateTime(sale.deliveredAt) : ''}` 
-                      : `📦 ${getDeliveryStatusLabel(sale.deliveryStatus).label}`
-                    }
-                  </p>
-                )}
-                {sale.store?.address && (
-                  <p className="hidden print:block text-sm mt-1">{sale.store.address}</p>
-                )}
-                {sale.store?.phone && (
-                  <p className="hidden print:block text-sm">{sale.store.phone}</p>
-                )}
-              </div>
-              
-              <div className="mt-4 md:mt-0 print:hidden">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Total Amount</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {formatCurrency(sale.total)}
-                  </p>
-                </div>
-              </div>
+        <div id="receipt-content" className="bg-white rounded-lg shadow-lg print:shadow-none print:rounded-none">
+          {/* Order Header */}
+          <div className="p-6 border-b print:border-black print:p-4">
+            <div className="text-center mb-6 print:mb-4">
+              <h1 className="text-2xl font-bold text-gray-900 print:text-xl print:text-black">
+                {sale.store?.businessName || sale.store?.name || 'Receipt'}
+              </h1>
+              {sale.store?.address && (
+                <p className="text-gray-600 print:text-black print:text-sm">{sale.store.address}</p>
+              )}
+              {sale.store?.phone && (
+                <p className="text-gray-600 print:text-black print:text-sm">{sale.store.phone}</p>
+              )}
             </div>
-          </div>
 
-          <div className="p-6 print:p-4">
-            {/* Delivery Alert */}
-            {sale?.deliveryType?.toLowerCase() === 'delivery' && isDeliveryOverdue() && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 print:hidden">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">
-                      <strong>Delivery Alert:</strong> This order has been pending delivery for more than 5 days. Please update the delivery status or contact the customer.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Order Info Grid - Hidden in print */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print:hidden">
-              {/* Receipt Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Receipt Details</h3>
-                <p className="text-sm text-gray-600 mb-1">Receipt ID</p>
-                <p className="font-medium font-mono text-sm">{sale.invoiceNumber}</p>
-                <p className="text-sm text-gray-600 mb-1 mt-2">Date & Time</p>
-                <p className="font-medium text-sm">{formatDateTime(sale.createdAt)}</p>
-              </div>
-
-              {/* Customer Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Customer</h3>
-                <p className="text-sm text-gray-600 mb-1">Name</p>
-                <p className="font-medium">{sale.customer?.name || sale.customerName || 'Walk-in Customer'}</p>
-                {(sale.customer?.phone || sale.customerPhone) && (
-                  <>
-                    <p className="text-sm text-gray-600 mb-1 mt-2">Phone</p>
-                    <p className="font-medium text-sm">{sale.customer?.phone || sale.customerPhone}</p>
-                  </>
-                )}
-                {sale.customer?.email && (
-                  <>
-                    <p className="text-sm text-gray-600 mb-1 mt-2">Email</p>
-                    <p className="font-medium text-sm">{sale.customer.email}</p>
-                  </>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:gap-4">
+              {/* Order Info */}
+              <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:rounded-none print:p-0">
+                <h3 className="font-semibold text-gray-900 mb-2 print:text-black">Order Details</h3>
+                <p className="text-sm text-gray-600 mb-1 print:text-black">Receipt #</p>
+                <p className="font-medium print:text-sm">{sale.invoiceNumber}</p>
+                <p className="text-sm text-gray-600 mb-1 mt-2 print:text-black">Date & Time</p>
+                <p className="font-medium print:text-sm">{formatDateTime(sale.createdAt)}</p>
               </div>
 
               {/* Payment Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Payment</h3>
-                <p className="text-sm text-gray-600 mb-1">Method</p>
-                <p className="font-medium">{getPaymentMethodLabel(sale.paymentMethod)}</p>
-                <p className="text-sm text-gray-600 mb-1 mt-2">Total Amount</p>
-                <p className="font-medium text-lg text-green-600">{formatCurrency(sale.total)}</p>
+              <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:rounded-none print:p-0">
+                <h3 className="font-semibold text-gray-900 mb-2 print:text-black">Payment</h3>
+                <p className="text-sm text-gray-600 mb-1 print:text-black">Method</p>
+                <p className="font-medium print:text-sm">{getPaymentMethodLabel(sale.paymentMethod)}</p>
+                <p className="text-sm text-gray-600 mb-1 mt-2 print:text-black">Total Amount</p>
+                <p className="font-medium text-lg text-green-600 print:text-black print:text-sm">{formatCurrency(sale.total)}</p>
               </div>
 
               {/* Cashier Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">Processed By</h3>
+              <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:rounded-none print:p-0">
+                <h3 className="font-semibold text-gray-900 mb-2 print:text-black">Processed By</h3>
                 <div className="flex items-center gap-2 mb-2">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium">{sale.cashier.firstName} {sale.cashier.lastName}</span>
+                  <User className="w-4 h-4 text-gray-400 print:hidden" />
+                  <span className="font-medium print:text-sm">{sale.cashier.firstName} {sale.cashier.lastName}</span>
                 </div>
                 {sale.deliveryType && (
                   <>
-                    <p className="text-sm text-gray-600 mb-1">Order Type</p>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      sale?.deliveryType?.toLowerCase() === 'delivery' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                    <p className="text-sm text-gray-600 mb-1 print:text-black">Order Type</p>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full print:px-0 print:py-0 print:rounded-none print:text-sm ${
+                      sale?.deliveryType?.toLowerCase() === 'delivery' ? 'bg-blue-100 text-blue-800 print:bg-white print:text-black' : 'bg-gray-100 text-gray-800 print:bg-white print:text-black'
                     }`}>
                       {sale?.deliveryType?.toLowerCase() === 'delivery' ? 'Delivery' : 'Walk-in'}
                     </span>
@@ -558,7 +482,7 @@ export default function OrderDetail() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-2">
                     {/* Customer Information */}
                     {(sale.customerName || sale.customer?.name) && (
@@ -567,27 +491,27 @@ export default function OrderDetail() {
                         <p className="font-medium print:text-sm">{sale.customerName || sale.customer?.name}</p>
                       </div>
                     )}
-                    
+
                     {(sale.customerPhone || sale.customer?.phone) && (
                       <div>
                         <p className="text-sm text-gray-600 print:text-black">Customer Phone</p>
                         <p className="font-medium print:text-sm">{sale.customerPhone || sale.customer?.phone}</p>
                       </div>
                     )}
-                    
+
                     {/* Delivery Address */}
                     <div>
                       <p className="text-sm text-gray-600 print:text-black">Delivery Address</p>
                       <p className="font-medium print:text-sm">{sale.deliveryAddress || 'Not specified'}</p>
                     </div>
-                    
+
                     {sale.deliveryPrice && (
                       <div>
                         <p className="text-sm text-gray-600 print:text-black">Delivery Fee</p>
                         <p className="font-medium print:text-sm">{formatCurrency(sale.deliveryPrice)}</p>
                       </div>
                     )}
-                    
+
                     {sale.riderName && (
                       <div>
                         <p className="text-sm text-gray-600 print:text-black">Rider</p>
@@ -597,21 +521,21 @@ export default function OrderDetail() {
                         )}
                       </div>
                     )}
-                    
+
                     {sale.parcelNumber && (
                       <div>
                         <p className="text-sm text-gray-600 print:text-black">Parcel Number</p>
                         <p className="font-medium font-mono print:text-sm">{sale.parcelNumber}</p>
                       </div>
                     )}
-                    
+
                     {sale.deliveredAt && (
                       <div>
                         <p className="text-sm text-gray-600 print:text-black">Delivered At</p>
                         <p className="font-medium print:text-sm">{formatDateTime(sale.deliveredAt)}</p>
                       </div>
                     )}
-                    
+
                     {sale.deliveryNotes && (
                       <div className="md:col-span-2">
                         <p className="text-sm text-gray-600 print:text-black">Delivery Notes</p>
@@ -669,8 +593,8 @@ export default function OrderDetail() {
 
             {/* Items Table */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 print:text-base print:mb-2 print:border-b print:border-black print:pb-1">Items Purchased</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 print:text-base print:mb-2 print:border-b print:border-black print:pb-1 print:text-black">Items Purchased</h3>   
+
               <div className="overflow-x-auto print:overflow-visible">
                 <table className="w-full border rounded-lg print:border-0 print:rounded-none">
                   <thead className="bg-gray-50 print:bg-white">
@@ -719,26 +643,26 @@ export default function OrderDetail() {
                       <span className="text-gray-600 print:text-black">Subtotal:</span>
                       <span className="font-medium print:text-black">{formatCurrency(sale.subtotal)}</span>
                     </div>
-                    
+
                     {sale.deliveryPrice && sale.deliveryPrice > 0 && (
                       <div className="flex justify-between print:text-sm">
                         <span className="text-gray-600 print:text-black">Delivery Fee:</span>
                         <span className="font-medium print:text-black">{formatCurrency(sale.deliveryPrice)}</span>
                       </div>
                     )}
-                    
+
                     {sale.discount > 0 && (
                       <div className="flex justify-between text-red-600 print:text-black print:text-sm">
                         <span>Discount:</span>
                         <span>-{formatCurrency(sale.discount)}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex justify-between print:text-sm">
                       <span className="text-gray-600 print:text-black">Tax (VAT):</span>
                       <span className="font-medium print:text-black">{formatCurrency(sale.tax)}</span>
                     </div>
-                    
+
                     <div className="border-t pt-2 print:border-black print:pt-1">
                       <div className="flex justify-between text-lg font-bold print:text-base">
                         <span className="print:text-black">Total:</span>
@@ -757,7 +681,7 @@ export default function OrderDetail() {
                 <p className="text-gray-600 print:text-black print:text-sm">{sale.notes}</p>
               </div>
             )}
-            
+
             {/* Print-only footer */}
             <div className="hidden print:block mt-4 pt-2 border-t border-black text-center">
               <p className="text-sm">Thank you for your business!</p>
@@ -765,7 +689,7 @@ export default function OrderDetail() {
           </div>
         </div>
       </div>
-      
+
       {/* Delivery Update Modal */}
       {showDeliveryModal && sale?.deliveryType?.toLowerCase() === 'delivery' && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -791,8 +715,8 @@ export default function OrderDetail() {
                   </label>
                   <select
                     value={deliveryFormData.deliveryStatus}
-                    onChange={(e) => setDeliveryFormData(prev => ({ 
-                      ...prev, 
+                    onChange={(e) => setDeliveryFormData(prev => ({
+                      ...prev,
                       deliveryStatus: e.target.value as 'pending' | 'in-transit' | 'delivered' | 'failed' | 'out_for_delivery'
                     }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -819,7 +743,7 @@ export default function OrderDetail() {
                       placeholder="Enter rider name"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Rider Phone
@@ -871,9 +795,9 @@ export default function OrderDetail() {
                     <input
                       type="datetime-local"
                       value={deliveryFormData.deliveredAt ? new Date(deliveryFormData.deliveredAt).toISOString().slice(0, 16) : ''}
-                      onChange={(e) => setDeliveryFormData(prev => ({ 
-                        ...prev, 
-                        deliveredAt: e.target.value ? new Date(e.target.value).toISOString() : '' 
+                      onChange={(e) => setDeliveryFormData(prev => ({
+                        ...prev,
+                        deliveredAt: e.target.value ? new Date(e.target.value).toISOString() : ''
                       }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -923,7 +847,7 @@ export default function OrderDetail() {
           </div>
         </div>
       )}
-      
+
       {/* Enhanced Print Styles */}
       <style jsx global>{`
         @media print {
@@ -931,12 +855,12 @@ export default function OrderDetail() {
           body * {
             visibility: hidden;
           }
-          
+
           /* Show only the receipt content */
           #receipt-content, #receipt-content * {
             visibility: visible;
           }
-          
+
           /* Position the receipt content properly */
           #receipt-content {
             position: absolute;
@@ -952,18 +876,18 @@ export default function OrderDetail() {
             line-height: 1.4;
             page-break-inside: avoid;
           }
-          
+
           /* Hide page URL and browser elements, force single page */
           @page {
             margin: 0.3in;
             size: auto;
           }
-          
+
           /* Remove URL from header/footer */
           @page :first {
             margin-top: 0;
           }
-          
+
           /* Ensure proper colors and spacing */
           * {
             background: transparent !important;
@@ -972,34 +896,34 @@ export default function OrderDetail() {
             text-shadow: none !important;
             page-break-inside: avoid;
           }
-          
+
           /* Force content to fit on one page */
           html, body {
             height: auto !important;
             overflow: visible !important;
           }
-          
+
           /* Hide navigation and UI elements */
           .print\\:hidden {
             display: none !important;
           }
-          
+
           /* Show print-only elements */
           .print\\:block {
             display: block !important;
           }
-          
+
           /* Prevent page breaks in tables */
           table {
             page-break-inside: avoid;
           }
-          
+
           /* Hide URL from print preview */
           body::before {
             content: '' !important;
           }
         }
-        
+
         /* Hide print dialog URL */
         @media print {
           .no-print, .no-print * {

@@ -38,7 +38,7 @@ interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   sale: SaleData | null;
-  store: Store;
+  store: Store | null;
   onNewSale: () => void;
   brandStyles: BrandStyles;
   cashier?: {
@@ -429,7 +429,7 @@ export default function ReceiptModal({
                 <div class="item-name">${item.product.name}</div>
                 <div class="item-details">
                   ${formatCurrency(item.product.sellingPrice)} × ${item.quantity}
-                  ${item.product.sku ? ` • SKU: ${item.product.sku}` : ''}
+                  ${item.product.barcode ? ` • Barcode: ${item.product.barcode}` : ''}
                 </div>
               </div>
               <div class="item-price">${formatCurrency(item.subtotal)}</div>
@@ -649,8 +649,8 @@ export default function ReceiptModal({
                       </p>
                       <div className="flex items-center mt-1 text-sm text-gray-600 print:text-black print:text-xs">
                         <span>{formatCurrency(item.product.sellingPrice)} × {item.quantity}</span>
-                        {item.product.sku && (
-                          <span className="ml-2 text-gray-500 print:text-black">SKU: {item.product.sku}</span>
+                        {item.product.barcode && (
+                          <span className="ml-2 text-gray-500 print:text-black">Barcode: {item.product.barcode}</span>
                         )}
                       </div>
                     </div>
