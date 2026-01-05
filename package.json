@@ -18,7 +18,7 @@
     "db:reset": "node scripts/reset-database.js",
     "db:reset:safe": "node scripts/reset-database-safe.js",
     "db:reset:prod": "NODE_ENV=production node scripts/reset-database-safe.js",
-    "vercel-build": "node scripts/setup-env.js && node scripts/migrate-db.js && npx prisma generate && next build",
+    "vercel-build": "node scripts/setup-env.js && node scripts/setup-database.js && node scripts/migrate-db.js && npx prisma generate && next build",
     "check-deployment": "node scripts/check-deployment.js"
   },
   "dependencies": {
