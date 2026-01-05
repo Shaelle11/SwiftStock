@@ -27,7 +27,10 @@ export async function apiRequest<T>(
     }
 
     // Build URL with query params
-    const url = new URL(endpoint, window.location.origin);
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+    const url = new URL(endpoint, baseUrl);
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         url.searchParams.append(key, value);

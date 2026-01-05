@@ -125,32 +125,6 @@ export default function CartSummary({
           </div>
         )}
       </div>
-                    >
-                      -
-                    </button>
-                    <span className="w-8 text-center text-sm font-medium text-gray-900">{item.quantity}</span>
-                    <button
-                      onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-                      className="w-6 h-6 rounded-full border border-teal-300 bg-white flex items-center justify-center hover:bg-teal-50 text-teal-700 transition-colors"
-                    >
-                      +
-                    </button>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(item.subtotal)}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {formatCurrency(item.product.sellingPrice)} each
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Order Summary */}
       <div className="border-t border-gray-200 pt-4">
@@ -236,8 +210,6 @@ export default function CartSummary({
           </button>
         </div>
       )}
-        )}
-      </button>
     </div>
   );
 }

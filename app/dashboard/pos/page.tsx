@@ -292,9 +292,6 @@ export default function POSPage() {
             error={error}
             brandStyles={brandStyles}
           />
-            error={error}
-            brandStyles={brandStyles}
-          />
         </div>
       </div>
       

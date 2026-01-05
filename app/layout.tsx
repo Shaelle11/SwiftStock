@@ -1,3 +1,5 @@
+'use client';
+
 import "@/styles/globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
